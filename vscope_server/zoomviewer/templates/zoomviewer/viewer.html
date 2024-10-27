@@ -1,0 +1,21 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>Deep Zoom Viewer</title>
+    </head>
+    <body>
+        <h1>Deep Zoom Viewer: Test</h1>
+        <div id="openseadragon" style="width: 800px; height: 600px;"></div>
+
+        <script src="{% static 'zoomviewer/openseadragon/openseadragon.min.js' %}"></script>
+        <script type="text/javascript">
+            OpenSeadragon({
+                id: "openseadragon",
+                tileSources: "{{ slide_url }}",
+                prefixUrl: "{% static 'zoomviewer/openseadragon/images/' %}",
+            });
+        </script>
+    </body>
+</html>
