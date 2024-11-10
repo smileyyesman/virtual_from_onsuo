@@ -9,12 +9,12 @@
         <h1>Deep Zoom Viewer: Test</h1>
         <div id="openseadragon" style="width: 800px; height: 600px;"></div>
 
-        <script src="{% static 'zoomviewer/openseadragon/openseadragon.min.js' %}"></script>
+        <script src="{% static 'viewer/openseadragon/openseadragon.min.js' %}"></script>
         <script type="text/javascript">
             OpenSeadragon({
                 id: "openseadragon",
                 tileSources: "{{ slide_url }}",
-                prefixUrl: "{% static 'zoomviewer/openseadragon/images/' %}",
+                prefixUrl: "{% static 'viewer/openseadragon/images/' %}",
             });
         </script>
     </body>

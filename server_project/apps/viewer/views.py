@@ -6,7 +6,7 @@ from openslide import open_slide
 from openslide.deepzoom import DeepZoomGenerator
 
 # Path to your slide file
-SLIDE_FILE_PATH = "/home/onsuo/dev/virtual_microscope/slides/H7050x20 blood vessels human.ndpi"
+SLIDE_FILE_PATH = "/home/onsuo/dev/virtual_microscope/server_project/media/slides/H7050x20 blood vessels human.ndpi"
 SLIDE_NAME = "H7050x20 blood vessels human"
 
 # Create the DeepZoomGenerator instance when the server starts
@@ -20,9 +20,9 @@ def viewer(request):
     """
     context = {
         "slide_name": SLIDE_NAME,
-        "slide_url": f"/zoomviewer/{SLIDE_NAME}.dzi",
+        "slide_url": f"/viewer/{SLIDE_NAME}.dzi",
     }
-    return render(request, "zoomviewer/viewer.html", context)
+    return render(request, "viewer/viewer.html", context)
 
 
 def dzi(request, slug):
