@@ -1,57 +1,50 @@
 from io import BytesIO
 
 from django.http import Http404, HttpResponse
-from django.shortcuts import render
+from django.shortcuts import get_object_or_404, render
 from openslide import open_slide
 from openslide.deepzoom import DeepZoomGenerator
 
-# Path to your slide file
-SLIDE_FILE_PATH = "/home/onsuo/dev/virtual_microscope/server_project/media/slides/H7050x20 blood vessels human.ndpi"
-SLIDE_NAME = "H7050x20 blood vessels human"
-
-# Create the DeepZoomGenerator instance when the server starts
-slide = open_slide(SLIDE_FILE_PATH)
-deepzoom = DeepZoomGenerator(slide)
+from .models import Slide
 
 
-def viewer(request):
+def openseadragon_view(request, slug):
     """
-    View to render the main Deep Zoom viewer.
+    Render a page with the OpenSeadragon viewer for the specified slide.
     """
+    slide_obj = get_object_or_404(Slide, name=slug)
     context = {
-        "slide_name": SLIDE_NAME,
-        "slide_url": f"/viewer/{SLIDE_NAME}.dzi",
+        "slide_name": slide_obj.name.replace("-", " ").capitalize(),
+        "dzi_url": f"/slides/{slug}.dzi",
     }
     return render(request, "viewer/viewer.html", context)
 
 
-def dzi(request, slug):
+def dzi_descriptor(request, slug):
     """
-    View to serve the Deep Zoom descriptor (DZI) XML file.
+    Serve the Deep Zoom descriptor (DZI) XML file for a slide.
     """
-    if slug != SLIDE_NAME:
-        raise Http404("Slide not found")
-
-    # Get DZI XML format from the DeepZoomGenerator
-    dzi_content = deepzoom.get_dzi("jpeg")
+    slide_obj = get_object_or_404(Slide, name=slug)
+    with open_slide(slide_obj.file.path) as slide:
+        deepzoom = DeepZoomGenerator(slide)
+        dzi_content = deepzoom.get_dzi("jpeg")
     return HttpResponse(dzi_content, content_type="application/xml")
 
 
 def tile(request, slug, level, col, row, format):
     """
-    View to serve individual Deep Zoom tiles.
+    Serve individual Deep Zoom tiles for a slide.
     """
-    if slug != SLIDE_NAME:
-        raise Http404("Slide not found")
-    if format not in ["jpeg", "png"]:
-        raise Http404("Unsupported format")
+    slide_obj = get_object_or_404(Slide, name=slug)
+    with open_slide(slide_obj.file.path) as slide:
+        deepzoom = DeepZoomGenerator(slide)
 
-    try:
-        # Get the requested tile from the DeepZoomGenerator
-        tile_img = deepzoom.get_tile(level, (col, row))
-        buffer = BytesIO()
-        tile_img.save(buffer, format=format, quality=75)
-        return HttpResponse(buffer.getvalue(), content_type=f"image/{format}")
-    except ValueError:
-        # Invalid level or tile coordinates
-        raise Http404("Tile not found")
+        if format not in ["jpeg", "png"]:
+            raise Http404("Unsupported format")
+        try:
+            tile_img = deepzoom.get_tile(level, (col, row))
+            buffer = BytesIO()
+            tile_img.save(buffer, format=format, quality=75)
+            return HttpResponse(buffer.getvalue(), content_type=f"image/{format}")
+        except ValueError:
+            raise Http404("Invalid level or tile coordinates")

@@ -1,1 +1,9 @@
-server_project/media/slides/*
+# Python
+*.pyc
+__pycache__/
+
+# Django
+server_project/media/
+server_project/db.sqlite3
+server_project/apps/viewer/migrations/
+dayoung/

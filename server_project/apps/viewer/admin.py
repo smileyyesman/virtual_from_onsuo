@@ -1,3 +1,10 @@
 from django.contrib import admin
 
-# Register your models here.
+from .models import Slide
+
+
+@admin.register(Slide)
+class SlideAdmin(admin.ModelAdmin):
+    list_display = ("name", "file", "created", "updated")
+    search_fields = ("name",)
+    prepopulated_fields = {"name": ("file",)}
