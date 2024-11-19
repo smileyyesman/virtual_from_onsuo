@@ -6,4 +6,3 @@ __pycache__/
 server_project/media/
 server_project/db.sqlite3
 server_project/apps/viewer/migrations/
-dayoung/

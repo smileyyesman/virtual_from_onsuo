@@ -12,9 +12,9 @@ def openseadragon_view(request, slug):
     """
     Render a page with the OpenSeadragon viewer for the specified slide.
     """
-    slide_obj = get_object_or_404(Slide, name=slug)
+    slide_obj = get_object_or_404(Slide, slug=slug)
     context = {
-        "slide_name": slide_obj.name.replace("-", " ").capitalize(),
+        "slide_name": slide_obj.title,
         "dzi_url": f"/slides/{slug}.dzi",
     }
     return render(request, "viewer/viewer.html", context)
@@ -24,7 +24,7 @@ def dzi_descriptor(request, slug):
     """
     Serve the Deep Zoom descriptor (DZI) XML file for a slide.
     """
-    slide_obj = get_object_or_404(Slide, name=slug)
+    slide_obj = get_object_or_404(Slide, slug=slug)
     with open_slide(slide_obj.file.path) as slide:
         deepzoom = DeepZoomGenerator(slide)
         dzi_content = deepzoom.get_dzi("jpeg")
@@ -35,7 +35,7 @@ def tile(request, slug, level, col, row, format):
     """
     Serve individual Deep Zoom tiles for a slide.
     """
-    slide_obj = get_object_or_404(Slide, name=slug)
+    slide_obj = get_object_or_404(Slide, slug=slug)
     with open_slide(slide_obj.file.path) as slide:
         deepzoom = DeepZoomGenerator(slide)
 
