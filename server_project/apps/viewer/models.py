@@ -64,8 +64,16 @@ def create_image_files(sender, instance, **kwargs):
     slide = OpenSlide(instance.file.path)
     deepzoom = DeepZoomGenerator(slide)
 
-    image_format = "png"
-    dzi = deepzoom.get_dzi(image_format)
+    FORMAT = "jpeg"
+    """
+    png:
+        lossless, original qualtiy
+        8~9 times bigger size than ndpi --> total: x10 of ndpi file size
+    jpeg:
+        lossy, lower quality
+        same or smaller size than ndpi --> total: x2 of ndpi file size
+    """
+    dzi = deepzoom.get_dzi(FORMAT)
 
     # create dzi file
     with open(dzi_path, "w") as f:
@@ -79,7 +87,7 @@ def create_image_files(sender, instance, **kwargs):
 
         for col in range(deepzoom.level_tiles[level][0]):
             for row in range(deepzoom.level_tiles[level][1]):
-                tile_path = os.path.join(level_dir, f"{col}_{row}.{image_format}")
+                tile_path = os.path.join(level_dir, f"{col}_{row}.{FORMAT}")
                 tile = deepzoom.get_tile(level, (col, row))
                 tile.save(tile_path)
 
