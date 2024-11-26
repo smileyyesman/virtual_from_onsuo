@@ -3,6 +3,6 @@
 __pycache__/
 
 # Django
-server_project/media/
-server_project/db.sqlite3
-server_project/apps/viewer/migrations/
+media/
+db.sqlite3
+migrations/

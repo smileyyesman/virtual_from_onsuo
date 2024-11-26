@@ -1,9 +1,9 @@
+import os
 from io import BytesIO
 
+from django.conf import settings
 from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404, render
-from openslide import open_slide
-from openslide.deepzoom import DeepZoomGenerator
 
 from .models import Slide
 
@@ -22,12 +22,11 @@ def openseadragon_view(request, slug):
 
 def dzi_descriptor(request, slug):
     """
-    Serve the Deep Zoom descriptor (DZI) XML file for a slide.
+    Serve the Deep Zoom Image (DZI) XML file for a slide.
     """
-    slide_obj = get_object_or_404(Slide, slug=slug)
-    with open_slide(slide_obj.file.path) as slide:
-        deepzoom = DeepZoomGenerator(slide)
-        dzi_content = deepzoom.get_dzi("jpeg")
+    dzi_path = os.path.join(settings.MEDIA_ROOT, "images", slug, slug + ".dzi")
+    with open(dzi_path, "r") as f:
+        dzi_content = f.read()
     return HttpResponse(dzi_content, content_type="application/xml")
 
 
@@ -35,16 +34,13 @@ def tile(request, slug, level, col, row, format):
     """
     Serve individual Deep Zoom tiles for a slide.
     """
-    slide_obj = get_object_or_404(Slide, slug=slug)
-    with open_slide(slide_obj.file.path) as slide:
-        deepzoom = DeepZoomGenerator(slide)
+    tile_dir = os.path.join(settings.MEDIA_ROOT, "images", slug, slug + "_files")
+    if format not in ["jpeg", "png"]:
+        raise Http404("Unsupported format")
 
-        if format not in ["jpeg", "png"]:
-            raise Http404("Unsupported format")
-        try:
-            tile_img = deepzoom.get_tile(level, (col, row))
-            buffer = BytesIO()
-            tile_img.save(buffer, format=format, quality=75)
-            return HttpResponse(buffer.getvalue(), content_type=f"image/{format}")
-        except ValueError:
-            raise Http404("Invalid level or tile coordinates")
+    try:
+        with open(os.path.join(tile_dir, str(level), f"{col}_{row}.{format}"), "rb") as f:
+            tile = BytesIO(f.read())
+        return HttpResponse(tile, content_type=f"image/{format}")
+    except ValueError:
+        raise Http404("Invalid level or tile coordinates")
