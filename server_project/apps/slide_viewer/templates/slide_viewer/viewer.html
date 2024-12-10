@@ -1,0 +1,34 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ slide_name }}</title>
+    <script src="{% static 'slide_viewer/openseadragon/openseadragon.min.js' %}"></script>
+</head>
+<body>
+    <h1>{{ slide_name }}</h1>
+    <button onclick="toggleNav()">Toggle Navigator</button>
+    <div id="openseadragon-container" style="width: 100%; height: 600px;"></div>
+    <script type="text/javascript">
+        var viewer = OpenSeadragon({
+            id: "openseadragon-container",
+            tileSources: "{{ dzi_url }}",
+            prefixUrl: "{% static 'slide_viewer/openseadragon/images/' %}",
+            showNavigator: true,
+            navigatorAutoFade:  false,
+            debugMode: false,
+        });
+
+        var navShown = true;
+        function toggleNav () {
+            if (navShown)
+                viewer.navigator.element.style.display = "none";
+            else
+                viewer.navigator.element.style.display = "inline-block";
+            navShown = !navShown;
+        }
+    </script>
+</body>
+</html>

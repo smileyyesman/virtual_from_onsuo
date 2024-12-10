@@ -1,0 +1,12 @@
+<div class="slide-card">
+    <h3><a href="{% url 'slide_viewer:slide_view' slug=slide.slug %}">{{ slide.name }}</a></h3>
+    <p>{{ slide.description|default:""|truncatewords:30 }}</p>
+    <p>Uploaded: {{ slide.uploaded_at|date:"F d, Y" }}</p>
+    {% if slide.tags.all %}
+        <p>Tags: 
+            {% for tag in slide.tags.all %}
+                <span class="tag">{{ tag.name }}</span>
+            {% endfor %}
+        </p>
+    {% endif %}
+</div>

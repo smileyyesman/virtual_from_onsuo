@@ -1,0 +1,39 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{% static 'slides/css/style.css' %}">
+</head>
+<body>
+    {% block content %}
+        <h1>All Slides</h1>
+        
+        {% for department in departments %}
+            <h2>{{ department.name|default:"No Department" }}</h2>
+            
+            {% if department.slides.all %}
+                <div class="slides-grid">
+                    {% for slide in department.slides.all %}
+                        {% include 'slides/_slide_card.html' %}
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p>No slides in this department.</p>
+            {% endif %}
+        {% empty %}
+            <p>No departments found.</p>
+        {% endfor %}
+
+        {% if slides_without_department %}
+            <h2>Unassigned Slides</h2>
+            <div class="slides-grid">
+                {% for slide in slides_without_department %}
+                    {% include 'slides/_slide_card.html' %}
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endblock %}
+</body>
+</html>
