@@ -21,7 +21,7 @@ class SlideView(TemplateView):
         slide_obj = get_object_or_404(Slide, slug=slug)
         context.update(
             {
-                "slide_name": slide_obj.name,
+                "slide": slide_obj,
                 "dzi_url": f"/viewer/{slug}.dzi",
             }
         )

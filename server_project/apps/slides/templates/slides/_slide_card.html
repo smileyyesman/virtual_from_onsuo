@@ -1,12 +1,22 @@
-<div class="slide-card">
-    <h3><a href="{% url 'slide_viewer:slide_view' slug=slide.slug %}">{{ slide.name }}</a></h3>
-    <p>{{ slide.description|default:""|truncatewords:30 }}</p>
-    <p>Uploaded: {{ slide.uploaded_at|date:"F d, Y" }}</p>
-    {% if slide.tags.all %}
-        <p>Tags: 
-            {% for tag in slide.tags.all %}
-                <span class="tag">{{ tag.name }}</span>
-            {% endfor %}
+<div class="card h-100 shadow-sm">
+    <div class="card-body">
+        <h3 class="card-title h5">
+            <a href="{% url 'slide_viewer:slide_view' slug=slide.slug %}" class="text-decoration-none">
+                {{ slide.name }}
+            </a>
+        </h3>
+        <p class="card-text">{{ slide.description|default:""|truncatewords:30 }}</p>
+        <p class="card-text">
+            <small class="text-muted">
+                Uploaded: {{ slide.uploaded_at|date:"F d, Y" }}
+            </small>
         </p>
-    {% endif %}
+        {% if slide.tags.all %}
+            <div class="mt-2">
+                {% for tag in slide.tags.all %}
+                    <span class="badge rounded-pill text-bg-secondary me-1">{{ tag.name }}</span>
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
 </div>

@@ -1,39 +1,41 @@
+{% extends 'base.html' %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="{% static 'slides/css/style.css' %}">
-</head>
-<body>
-    {% block content %}
-        <h1>All Slides</h1>
-        
-        {% for department in departments %}
-            <h2>{{ department.name|default:"No Department" }}</h2>
-            
-            {% if department.slides.all %}
-                <div class="slides-grid">
-                    {% for slide in department.slides.all %}
-                        {% include 'slides/_slide_card.html' %}
-                    {% endfor %}
-                </div>
-            {% else %}
-                <p>No slides in this department.</p>
-            {% endif %}
-        {% empty %}
-            <p>No departments found.</p>
-        {% endfor %}
 
-        {% if slides_without_department %}
-            <h2>Unassigned Slides</h2>
-            <div class="slides-grid">
-                {% for slide in slides_without_department %}
-                    {% include 'slides/_slide_card.html' %}
-                {% endfor %}
+{% block title %}All Slides{% endblock %}
+
+{% block content %}
+<h1 class="display-4 mb-4">All Slides</h1>
+
+    {% for department in departments %}
+    <div class="mb-5">
+        <h2 class="h3 border-bottom pb-2">{{ department.name|default:"No Department" }}</h2>
+        
+            {% if department.slides.all %}
+            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 mt-2">
+                    {% for slide in department.slides.all %}
+                    <div class="col">
+                        {% include 'slides/_slide_card.html' %}
+                    </div>
+                    {% endfor %}
             </div>
-        {% endif %}
-    {% endblock %}
-</body>
-</html>
+            {% else %}
+            <p class="text-muted">No slides in this department.</p>
+            {% endif %}
+    </div>
+    {% empty %}
+    <div class="alert alert-info">No departments found.</div>
+    {% endfor %}
+
+    {% if slides_without_department %}
+    <div class="mb-5">
+        <h2 class="h3 border-bottom pb-2">Unassigned Slides</h2>
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 mt-2">
+                {% for slide in slides_without_department %}
+                <div class="col">
+                    {% include 'slides/_slide_card.html' %}
+                </div>
+                {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+{% endblock %}

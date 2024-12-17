@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1 class="mb-4">Welcome to Virtual Microscope</h1>
+
+<div class="row g-4">
+    {% if user.is_authenticated and 'admin' in user.groups.all|stringformat:'s' %}
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title">Slides Collection</h5>
+                <p class="card-text">View all available microscope slides in the collection.</p>
+                <a href="{% url 'slides:all_slides' %}" class="btn btn-primary">
+                    <i class="bi bi-microscope"></i> View All Slides
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body">
+                {% if user.is_authenticated %}
+                <h5 class="card-title">Welcome, {{ user.username }}</h5>
+                <p class="card-text">
+                    Email: {{ user.email }}<br>
+                    Last login: {{ user.last_login|date:"F j, Y, g:i a" }}
+                </p>
+                {% else %}
+                <h5 class="card-title">Welcome to Virtual Microscope</h5>
+                <p class="card-text">Please log in to access all features.</p>
+                <div class="d-grid gap-2">
+                    <a href="{% url 'login' %}" class="btn btn-primary">
+                        <i class="bi bi-box-arrow-in-right"></i> Login
+                    </a>
+                    <a href="{% url 'register' %}" class="btn btn-outline-primary">
+                        <i class="bi bi-person-plus"></i> Register
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

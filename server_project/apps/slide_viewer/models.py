@@ -1,14 +1,15 @@
 from django.db import models
 
 
-class Annotataion(models.Model):
+class Annotation(models.Model):
     id = models.AutoField(primary_key=True)
-    title = models.CharField(max_length=100, null=True)
+    name = models.CharField(max_length=100, null=True)
     description = models.TextField(
-        max_length=1000,
+        blank=True,
+        null=True,
         help_text="Description of the annotation",
     )
-    data = models.JSONField(null=True)
+    data = models.JSONField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     slide = models.ForeignKey(
@@ -17,3 +18,11 @@ class Annotataion(models.Model):
         blank=True,
         null=True,
     )
+
+    class Meta:
+        verbose_name = "Annotation"
+        verbose_name_plural = "Annotations"
+        ordering = ("created_at",)
+
+    def __str__(self):
+        return f"{self.name} - {self.slide}"

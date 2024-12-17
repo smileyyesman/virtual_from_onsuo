@@ -40,8 +40,8 @@ class Slide(models.Model):
         blank=True,
         help_text="Path to the image files.",
     )
-    created_at = models.DateField(blank=True, null=True)
-    uploaded_at = models.DateTimeField(auto_now_add=True)
+    metadata = models.JSONField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     uploader = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -52,7 +52,7 @@ class Slide(models.Model):
         null=True,
     )
     department = models.ForeignKey(
-        "Department",
+        "accounts.Department",
         on_delete=models.SET_NULL,
         related_name="slides",
         blank=True,
@@ -72,27 +72,16 @@ class Slide(models.Model):
         super().save(**kwargs)
 
 
-class Department(models.Model):
-    id = models.AutoField(primary_key=True)
-    name = models.CharField(max_length=100)
-
-    class Meta:
-        verbose_name = "Department"
-        verbose_name_plural = "Departments"
-        ordering = ("name",)
-
-    def __str__(self):
-        return self.name
-
-
 class Tag(models.Model):
     id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=100, unique=True)
-    slide = models.ManyToManyField(
+    slides = models.ManyToManyField(
         "Slide",
         related_name="tags",
         blank=True,
     )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         verbose_name = "Tag"
@@ -126,41 +115,55 @@ def delete_old_files(sender, instance, **kwargs):
 @receiver(post_save, sender=Slide)
 def generate_image_files(sender, instance, **kwargs):
     slideimage_dir = os.path.join(settings.MEDIA_ROOT, "images", instance.slug)
-    if os.path.exists(slideimage_dir):
-        return
-
-    dzi_path = os.path.join(slideimage_dir, "image.dzi")
-    tile_dir = os.path.join(slideimage_dir, "image_files/")
-    os.makedirs(tile_dir)
-
-    FORMAT = "jpeg"
-    """
-    png:
-        lossless, original qualtiy
-        8~9 times bigger size than ndpi --> total: x10 of ndpi file size
-    jpeg:
-        lossy, lower quality
-        same or smaller size than ndpi --> total: x2 of ndpi file size
-    """
     slide = OpenSlide(instance.file.path)
-    deepzoom = DeepZoomGenerator(slide)
-    dzi = deepzoom.get_dzi(FORMAT)
 
-    # create dzi file
-    with open(dzi_path, "w") as f:
-        f.write(dzi)
+    # create image files
+    if not os.path.exists(slideimage_dir):
+        dzi_path = os.path.join(slideimage_dir, "image.dzi")
+        tile_dir = os.path.join(slideimage_dir, "image_files/")
+        os.makedirs(tile_dir)
 
-    # create tile images
-    for level in range(deepzoom.level_count):
-        level_dir = os.path.join(tile_dir, str(level))
-        if not os.path.exists(level_dir):
-            os.makedirs(level_dir)
+        FORMAT = "jpeg"
+        """
+        png:
+            lossless, original qualtiy
+            8~9 times bigger size than ndpi --> total: x10 of ndpi file size
+        jpeg:
+            lossy, lower quality
+            same or smaller size than ndpi --> total: x2 of ndpi file size
+        """
+        deepzoom = DeepZoomGenerator(slide)
+        dzi = deepzoom.get_dzi(FORMAT)
 
-        for col in range(deepzoom.level_tiles[level][0]):
-            for row in range(deepzoom.level_tiles[level][1]):
-                tile_path = os.path.join(level_dir, f"{col}_{row}.{FORMAT}")
-                tile = deepzoom.get_tile(level, (col, row))
-                tile.save(tile_path)
+        # create dzi file
+        with open(dzi_path, "w") as f:
+            f.write(dzi)
+
+        # create tile images
+        for level in range(deepzoom.level_count):
+            level_dir = os.path.join(tile_dir, str(level))
+            if not os.path.exists(level_dir):
+                os.makedirs(level_dir)
+
+            for col in range(deepzoom.level_tiles[level][0]):
+                for row in range(deepzoom.level_tiles[level][1]):
+                    tile_path = os.path.join(level_dir, f"{col}_{row}.{FORMAT}")
+                    tile = deepzoom.get_tile(level, (col, row))
+                    tile.save(tile_path)
+
+    # save metadata
+    if not instance.metadata:
+        full_metadata = slide.properties
+        metadata = {
+            "mpp-x": float(full_metadata["openslide.mpp-x"]),
+            "mpp-y": float(full_metadata["openslide.mpp-y"]),
+            "sourceLens": int(full_metadata["hamamatsu.SourceLens"]),
+            "created": full_metadata["hamamatsu.Created"],
+        }
+        instance.metadata = metadata
+
+        # Save the instance without triggering the post_save signal again
+        Slide.objects.filter(pk=instance.pk).update(metadata=metadata)
 
     slide.close()
 
@@ -173,9 +176,3 @@ def delete_files(sender, instance, **kwargs):
     slideimage_dir = os.path.join(settings.MEDIA_ROOT, "images", instance.slug)
     if os.path.exists(slideimage_dir):
         shutil.rmtree(slideimage_dir)
-
-
-def get_metadata(slide_path):
-    slide = OpenSlide(slide_path)
-    metadata = slide.properties.items()
-    return metadata
