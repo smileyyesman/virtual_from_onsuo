@@ -9,6 +9,21 @@ from django.utils import timezone
 
 
 class UserManager(BaseUserManager):
+    def create_user(self, username, first_name, last_name, password=None, **extra_fields):
+        extra_fields.setdefault("is_staff", False)
+        extra_fields.setdefault("is_superuser", False)
+        return self._create_user(username, first_name, last_name, password, **extra_fields)
+
+    def create_superuser(self, username, first_name, last_name, password=None, **extra_fields):
+        extra_fields.setdefault("is_staff", True)
+        extra_fields.setdefault("is_superuser", True)
+
+        if extra_fields.get("is_staff") is not True:
+            raise ValueError("Superuser must have is_staff=True.")
+        if extra_fields.get("is_superuser") is not True:
+            raise ValueError("Superuser must have is_superuser=True.")
+
+        return self._create_user(username, first_name, last_name, password, **extra_fields)
 
     def _create_user(self, username, first_name, last_name, password, **extra_fields):
         if not username:
@@ -26,40 +41,30 @@ class UserManager(BaseUserManager):
         user.save(using=self._db)
         return user
 
-    def create_user(self, username, first_name, last_name, password=None, **extra_fields):
-        extra_fields.setdefault("is_staff", False)
-        extra_fields.setdefault("is_superuser", False)
-        return self._create_user(username, first_name, last_name, password, **extra_fields)
-
-    def create_superuser(self, username, first_name, last_name, password=None, **extra_fields):
-        extra_fields.setdefault("is_staff", True)
-        extra_fields.setdefault("is_superuser", True)
-
-        if extra_fields.get("is_staff") is not True:
-            raise ValueError("Superuser must have is_staff=True.")
-        if extra_fields.get("is_superuser") is not True:
-            raise ValueError("Superuser must have is_superuser=True.")
-
-        return self._create_user(username, first_name, last_name, password, **extra_fields)
-
 
 class User(AbstractBaseUser, PermissionsMixin):
-
-    username_validator = UnicodeUsernameValidator()
-
+    id = models.AutoField(primary_key=True)
     username = models.CharField(
         "username",
         max_length=150,
         unique=True,
         help_text="Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only.",
-        validators=[username_validator],
+        validators=[UnicodeUsernameValidator()],
         error_messages={
             "unique": "A user with that username already exists.",
         },
     )
-    email = models.EmailField("email address", max_length=255, unique=True)
+    email = models.EmailField("email address", max_length=255, unique=True, blank=True)
     first_name = models.CharField("first name", max_length=255, blank=True)
     last_name = models.CharField("last name", max_length=255, blank=True)
+    department = models.ForeignKey(
+        "accounts.Department",
+        on_delete=models.SET_NULL,
+        related_name="users",
+        blank=True,
+        null=True,
+        help_text="Department this user belongs to. Required for publishers.",
+    )
 
     is_staff = models.BooleanField(
         "staff status",
@@ -82,7 +87,7 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     USERNAME_FIELD = "username"
     EMAIL_FIELD = "email"
-    REQUIRED_FIELDS = ["first_name", "last_name"]
+    REQUIRED_FIELDS = ("first_name", "last_name")
 
     def clean(self):
         super().clean()
@@ -91,10 +96,14 @@ class User(AbstractBaseUser, PermissionsMixin):
     def get_full_name(self):
         return f"{self.first_name} {self.last_name}".strip()
 
+    def is_admin(self):
+        return self.groups.filter(name="admin").exists()
+
 
 class Department(models.Model):
     id = models.AutoField(primary_key=True)
-    name = models.CharField(max_length=100)
+    name = models.CharField(max_length=100, unique=True)
+    slug = models.SlugField(max_length=100, unique=True)
 
     class Meta:
         verbose_name = "Department"

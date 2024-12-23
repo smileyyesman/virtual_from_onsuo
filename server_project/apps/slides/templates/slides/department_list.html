@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1 class="mb-4">Departments</h1>
+
+<div class="row">
+    {% for department in departments %}
+    <div class="col-md-4 mb-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">{{ department.name }}</h5>
+                <p class="card-text">{{ department.slides.count }} slides</p>
+                <a href="{% url 'slides:slide_list' slug=department.slug %}" class="btn btn-primary">View Slides</a>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+        <div class="alert alert-info">No departments available.</div>
+    </div>
+    {% endfor %}
+
+    {% if has_no_department_slides and user.is_admin %}
+    <div class="col-md-4 mb-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">No Department</h5>
+                <p class="card-text">Slides without department assignment</p>
+                <a href="{% url 'slides:slide_list' slug='no-department' %}" class="btn btn-primary">View Slides</a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

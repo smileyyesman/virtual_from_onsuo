@@ -16,6 +16,8 @@ Including another URLconf
 """
 
 from accounts.views import HomeView
+from django.conf import settings
+from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
 
@@ -25,4 +27,4 @@ urlpatterns = [
     path("slides/", include("slides.urls")),
     path("accounts/", include("accounts.urls")),
     path("", HomeView.as_view(), name="home"),
-]
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

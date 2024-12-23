@@ -1,46 +1,42 @@
-from django.contrib.auth.views import LoginView as BaseLoginView
-from django.contrib.auth.views import LogoutView as BaseLogoutView
-from django.shortcuts import render
+from django.contrib.auth import views as auth_views
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.urls import reverse_lazy
-from django.views import View
+from django.views.generic import TemplateView
 from django.views.generic.edit import CreateView
 
-from .admin import UserCreationForm
+from . import forms
+
+
+class HomeView(TemplateView):
+    template_name = "accounts/home.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        user = self.request.user
+        if user.groups.filter(name="admin").exists():
+            context["show_slide_list"] = True
+        elif user.groups.filter(name="publisher").exists():
+            context["show_slide_list"] = True
+        else:
+            context["show_slide_list"] = False
+        return context
 
 
 class RegistrationView(CreateView):
-    form_class = UserCreationForm
+    form_class = forms.UserCreationForm
     template_name = "accounts/register.html"
     success_url = reverse_lazy("home")
 
-    def form_valid(self, form):
-        response = super().form_valid(form)
-        return response
 
-
-class LoginView(BaseLoginView):
+class LoginView(auth_views.LoginView):
+    form_class = forms.LoginForm
     template_name = "accounts/login.html"
-    success_url = reverse_lazy("home")
-    redirect_field_name = "next"
 
     def form_valid(self, form):
-        response = super().form_valid(form)
-        return response
-
-    def get_success_url(self):
-        next_url = self.request.GET.get("next") or self.request.POST.get("next")
-        if next_url:
-            return next_url
-        return self.success_url
+        if not form.cleaned_data["remember_me"]:
+            self.request.session.set_expiry(0)
+        return super().form_valid(form)
 
 
-class LogoutView(BaseLogoutView):
-    # next_page = reverse_lazy("home")
-    template_name = "accounts/logout.html"
-
-
-class HomeView(View):
-    template_name = "accounts/home.html"
-
-    def get(self, request):
-        return render(request, self.template_name)
+class ProfileView(LoginRequiredMixin, TemplateView):
+    template_name = "accounts/profile.html"

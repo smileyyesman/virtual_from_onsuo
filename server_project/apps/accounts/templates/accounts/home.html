@@ -4,14 +4,14 @@
 <h1 class="mb-4">Welcome to Virtual Microscope</h1>
 
 <div class="row g-4">
-    {% if user.is_authenticated and 'admin' in user.groups.all|stringformat:'s' %}
+    {% if show_slide_list %}
     <div class="col-md-4">
         <div class="card h-100">
             <div class="card-body">
                 <h5 class="card-title">Slides Collection</h5>
                 <p class="card-text">View all available microscope slides in the collection.</p>
-                <a href="{% url 'slides:all_slides' %}" class="btn btn-primary">
-                    <i class="bi bi-microscope"></i> View All Slides
+                <a href="{% url 'slides:department_list' %}" class="btn btn-primary">
+                    <i class="bi bi-microscope"></i> View Slide List
                 </a>
             </div>
         </div>
@@ -24,7 +24,7 @@
                 {% if user.is_authenticated %}
                 <h5 class="card-title">Welcome, {{ user.username }}</h5>
                 <p class="card-text">
-                    Email: {{ user.email }}<br>
+                    Name: {{ user.get_full_name }}<br>
                     Last login: {{ user.last_login|date:"F j, Y, g:i a" }}
                 </p>
                 {% else %}

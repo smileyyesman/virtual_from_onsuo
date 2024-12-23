@@ -12,26 +12,38 @@ class UserAdmin(BaseUserAdmin):
     list_display = ("username", "email", "first_name", "last_name", "is_staff")
     list_filter = ("groups", "is_staff")
     fieldsets = [
-        (None, {"fields": ("username", "email", "password")}),
-        ("Personal info", {"fields": ("first_name", "last_name")}),
+        (
+            None,
+            {"fields": ("username", "email", "password")},
+        ),
+        (
+            "Personal info",
+            {"fields": ("first_name", "last_name")},
+        ),
+        (
+            "Group",
+            {"fields": ("groups", "department")},
+        ),
         (
             "Permissions",
-            {"fields": ("is_active", "is_staff", "is_superuser", "groups")},
+            {"fields": ("is_active", "is_staff", "is_superuser")},
         ),
     ]
     add_fieldsets = [
         (
             None,
             {
-                "classes": ["wide"],
-                "fields": [
+                "classes": ("wide",),
+                "fields": (
                     "username",
                     "email",
                     "first_name",
                     "last_name",
                     "password1",
                     "password2",
-                ],
+                    "groups",
+                    "department",
+                ),
             },
         ),
     ]
@@ -47,3 +59,4 @@ admin.site.register(User, UserAdmin)
 class DepartmentAdmin(admin.ModelAdmin):
     list_display = ("name",)
     search_fields = ("name",)
+    prepopulated_fields = {"slug": ("name",)}
