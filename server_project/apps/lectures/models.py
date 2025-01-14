@@ -2,19 +2,19 @@ from django.conf import settings
 from django.db import models
 
 
-class Course(models.Model):
+class Lecture(models.Model):
     id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=100)
     slides = models.ManyToManyField(
         "slides.Slide",
-        related_name="courses",
+        related_name="lectures",
         blank=True,
     )
-    creater = models.ForeignKey(
+    creator = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         db_column="created_by",
-        related_name="courses",
+        related_name="lectures",
         blank=True,
         null=True,
     )
@@ -23,8 +23,8 @@ class Course(models.Model):
     is_active = models.BooleanField(default=True)
 
     class Meta:
-        verbose_name = "Course"
-        verbose_name_plural = "Courses"
+        verbose_name = "Lecture"
+        verbose_name_plural = "Lectures"
         ordering = ("created_at",)
 
     def __str__(self):
@@ -33,8 +33,8 @@ class Course(models.Model):
 
 class Enrollment(models.Model):
     id = models.AutoField(primary_key=True)
-    course = models.ForeignKey(
-        Course,
+    lecture = models.ForeignKey(
+        Lecture,
         on_delete=models.CASCADE,
         related_name="enrollments",
         blank=True,
@@ -55,4 +55,4 @@ class Enrollment(models.Model):
         ordering = ("enrolled_at",)
 
     def __str__(self):
-        return f"{self.course} - {self.user}"
+        return f"{self.lecture} - {self.user}"

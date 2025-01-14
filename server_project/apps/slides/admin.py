@@ -1,12 +1,22 @@
 from django.contrib import admin
 
-from .models import Slide, Tag
+from .models import (
+    Folder,
+    Slide,
+    Tag,
+)
+
+
+@admin.register(Folder)
+class FolderAdmin(admin.ModelAdmin):
+    list_display = ("name", "parent", "created_at")
+    search_fields = ("name",)
+    ordering = ("-created_at",)
 
 
 @admin.register(Slide)
 class SlideAdmin(admin.ModelAdmin):
-    list_display = ("name", "slug", "file", "created_at", "updated_at", "department")
-    list_filter = ("department",)
+    list_display = ("name", "slug", "file", "created_at", "updated_at")
     search_fields = ("name", "slug", "description")
     ordering = ("-created_at",)
 

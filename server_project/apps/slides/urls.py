@@ -7,12 +7,27 @@ app_name = "slides"
 urlpatterns = [
     path(
         "",
-        views.DepartmentSlideListView.as_view(),
-        name="department_list",
+        views.FolderNavigationView.as_view(),
+        name="folder_navigation",
     ),
     path(
-        "<slug>",
-        views.SlideListView.as_view(),
-        name="slide_list",
+        "folders/create/",
+        views.create_folder,
+        name="create_folder",
+    ),
+    path(
+        "folders/rename/",
+        views.rename_folder,
+        name="rename_folder",
+    ),
+    path(
+        "folders/delete/",
+        views.delete_folder,
+        name="delete_folder",
+    ),
+    path(
+        "folders/details/",
+        views.folder_details,
+        name="folder_details",
     ),
 ]

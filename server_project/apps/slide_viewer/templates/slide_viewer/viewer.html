@@ -7,7 +7,7 @@
 <script src="{% static 'slide_viewer/openseadragon/openseadragon.min.js' %}"></script>
 {% endblock %}
 
-{% block extra_styles %}
+{% block extra_css %}
 <style>
     .viewer-container {
         position: relative;
@@ -68,7 +68,7 @@
 </div>
 {% endblock %}
 
-{% block extra_scripts %}
+{% block extra_js %}
 <script type="text/javascript">
     var viewer = OpenSeadragon({
         id: "openseadragon-container",

@@ -6,6 +6,7 @@ from django.contrib.auth.models import (
 from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.db import models
 from django.utils import timezone
+from slides.models import Folder
 
 
 class UserManager(BaseUserManager):
@@ -99,11 +100,21 @@ class User(AbstractBaseUser, PermissionsMixin):
     def is_admin(self):
         return self.groups.filter(name="admin").exists()
 
+    def is_publisher(self):
+        return self.groups.filter(name="publisher").exists()
+
 
 class Department(models.Model):
     id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=100, unique=True)
     slug = models.SlugField(max_length=100, unique=True)
+    base_folder = models.OneToOneField(
+        "slides.Folder",
+        on_delete=models.SET_NULL,
+        related_name="department",
+        blank=True,
+        null=True,
+    )
 
     class Meta:
         verbose_name = "Department"
@@ -112,3 +123,8 @@ class Department(models.Model):
 
     def __str__(self):
         return self.name
+
+    def save(self, *args, **kwargs):
+        if not self.base_folder:
+            self.base_folder = Folder.objects.create(name=self.name.lower(), parent=None)
+        super().save(*args, **kwargs)
