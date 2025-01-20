@@ -5,8 +5,8 @@ from .models import Enrollment, Lecture
 
 @admin.register(Lecture)
 class LectureAdmin(admin.ModelAdmin):
-    list_display = ("name", "creator", "created_at", "updated_at", "is_active")
-    list_filter = ("creator", "is_active")
+    list_display = ("name", "author", "created_at", "updated_at", "is_active")
+    list_filter = ("author", "is_active")
     search_fields = ("name", "creater__username")
     ordering = ("-updated_at",)
 

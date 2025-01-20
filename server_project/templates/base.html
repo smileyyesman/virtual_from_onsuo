@@ -9,6 +9,12 @@
     <link rel="stylesheet" href="{% static 'bootstrap/css/bootstrap.min.css' %}">
     <link rel="stylesheet" href="{% static 'bootstrap/icons/font/bootstrap-icons.css' %}">
     {% block extra_head %}{% endblock %}
+    <style>
+        .collapsing {
+            transition: none;
+            display: none;
+        }
+    </style>
     {% block extra_css %}{% endblock %}
 </head>
 <body class="bg-light">
@@ -85,6 +91,10 @@
     </footer>
 
     <script src="{% static 'bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+    <script>
+        const tooltipTriggerList = document.querySelectorAll('[data-bs-tooltip="tooltip"]');
+        const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl, { trigger: 'hover', delay: { "show": 500 } }));
+    </script>
     {% block extra_js %}{% endblock %}
 </body>
 </html>

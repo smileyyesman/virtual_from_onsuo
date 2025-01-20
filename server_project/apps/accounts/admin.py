@@ -22,7 +22,7 @@ class UserAdmin(BaseUserAdmin):
         ),
         (
             "Group",
-            {"fields": ("groups", "department")},
+            {"fields": ("groups", "department", "grade")},
         ),
         (
             "Permissions",

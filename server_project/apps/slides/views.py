@@ -52,7 +52,8 @@ class SlideNavigationView(LoginRequiredMixin, UserPassesTestMixin, ListView):
                 "name": folder.name,
                 "type": "folder",
                 "created_at": folder.created_at,
-                "tags": "",
+                "updated_at": folder.updated_at,
+                "author": folder.author.username if folder.author else None,
             }
             for folder in subfolders
         ]
@@ -63,6 +64,8 @@ class SlideNavigationView(LoginRequiredMixin, UserPassesTestMixin, ListView):
                     "name": slide.name,
                     "type": "slide",
                     "created_at": slide.created_at,
+                    "updated_at": slide.updated_at,
+                    "author": slide.author.username if slide.author else None,
                     "description": slide.description,
                     "tags": slide.tags,
                 }
@@ -127,7 +130,7 @@ def rename_folder(request):
 
         try:
             folder = Folder.objects.get(id=folder_id)
-            if folder.user_has_access(request.user):
+            if folder.user_has_access(request.user) and not folder.is_base_folder():
                 folder.name = new_name
                 folder.save()
                 messages.success(request, f'Folder renamed to "{new_name}" successfully.')
@@ -152,7 +155,11 @@ def move_folder(request):
             folder = Folder.objects.get(id=folder_id)
             new_parent = Folder.objects.get(id=new_parent_id)
 
-            if folder.user_has_access(request.user) and new_parent.user_has_access(request.user):
+            if (
+                folder.user_has_access(request.user)
+                and new_parent.user_has_access(request.user)
+                and not folder.is_base_folder()
+            ):
                 if not folder.is_children(new_parent) and not folder == new_parent:
                     folder.parent = new_parent
                     folder.save()
@@ -182,7 +189,7 @@ def delete_folder(request):
 
         try:
             folder = Folder.objects.get(id=folder_id)
-            if folder.user_has_access(request.user):
+            if folder.user_has_access(request.user) and not folder.is_base_folder():
                 if folder.is_empty():
                     folder.delete()
                     messages.success(request, f'Folder "{folder.name}" deleted successfully.')
@@ -211,6 +218,8 @@ def folder_details(request):
                 data = {
                     "name": folder.name,
                     "created_at": folder.created_at.strftime("%Y-%m-%d %H:%M"),
+                    "updated_at": folder.updated_at.strftime("%Y-%m-%d %H:%M"),
+                    "author": folder.author.username if folder.author else None,
                     "subfolder_count": folder.subfolders.all().count(),
                     "slide_count": folder.slides.all().count(),
                 }
@@ -235,7 +244,7 @@ def upload_slide(request):
                         file=file,
                         name=slide_name,
                         description=slide_description,
-                        uploader=request.user,
+                        author=request.user,
                     )
                     messages.success(
                         request, f'Slide "{file.name}" uploaded to "Root" successfully.'
@@ -247,7 +256,7 @@ def upload_slide(request):
                             file=file,
                             name=slide_name,
                             description=slide_description,
-                            uploader=request.user,
+                            author=request.user,
                             folder=folder,
                         )
                         messages.success(
@@ -351,7 +360,7 @@ def slide_details(request):
                     "description": slide.description,
                     "created_at": slide.created_at.strftime("%Y-%m-%d %H:%M"),
                     "updated_at": slide.updated_at.strftime("%Y-%m-%d %H:%M"),
-                    "uploader": slide.uploader.username,
+                    "author": slide.author.username,
                     "folder": slide.folder.get_full_path() if slide.folder else "Root",
                     "metadata": slide.metadata,
                     "file": slide.file.name,
@@ -380,4 +389,9 @@ def get_folder_tree(request):
     else:
         tree = []
 
-    return JsonResponse(tree, safe=False)
+    data = {
+        "tree": tree,
+        "show_root": request.user.is_admin(),
+    }
+
+    return JsonResponse(data, safe=False)

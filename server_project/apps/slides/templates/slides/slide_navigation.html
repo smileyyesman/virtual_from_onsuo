@@ -1,25 +1,16 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block extra_css %}
 <style>
-    #folderTreeContainer ul {
+    .folder-tree-container ul {
         padding-left: 1.5rem;
     }
-
-    #folderTreeContainer li {
-        position: relative;
-    }
-
-    #folderTreeContainer .form-check {
-        margin-bottom: 0.25rem;
-    }
-
-    .collapsing {
-        transition: none;
-        display: none;
+    .folder-tree-container .form-check {
+        margin-bottom: 0.3rem;
     }
 </style>
-{% endblock %}
+{% endblock extra_css %}
 
 {% block content %} 
 <!-- Breadcrumb -->
@@ -64,6 +55,8 @@
                 <th scope="col">Name</th>
                 <th scope="col">Type</th>
                 <th scope="col">Created</th>
+                <th scope="col">Updated</th>
+                <th scope="col">Author</th>
                 <th scope="col" class="text-end">Actions</th>
             </tr>
         </thead>
@@ -81,6 +74,8 @@
                 </td>
                 <td>{{ item.type|title }}</td>
                 <td>{{ item.created_at|date:"Y-m-d H:i" }}</td>
+                <td>{{ item.updated_at|date:"Y-m-d H:i" }}</td>
+                <td>{{ item.author|title }}</td>
                 <td class="text-end">
                     <div class="btn-group btn-group-sm">
                         {% if item.type == 'folder' %}
@@ -212,7 +207,7 @@
                     {% csrf_token %}
                     <input type="hidden" name="folder_id" id="moveFolderId" value="">
                     <p>Moving folder <span id="moveFolderNameDisplay" style="font-weight: bold;"></span> to: </p>
-                    <div id="folderTreeContainer_folder" class="border p-3" style="max-height: 300px; overflow-y: auto;"></div>
+                    <div id="folderTreeContainer_folder" class="border p-3 folder-tree-container" style="max-height: 300px; overflow-y: auto;"></div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -260,6 +255,10 @@
                     <dd class="col-9" id="detailFolderName"></dd>
                     <dt class="col-3">Created:</dt>
                     <dd class="col-9" id="detailFolderCreated"></dd>
+                    <dt class="col-3">Updated:</dt>
+                    <dd class="col-9" id="detailFolderUpdated"></dd>
+                    <dt class="col-3">Author:</dt>
+                    <dd class="col-9" id="detailFolderAuthor"></dd>
                     <dt class="col-3">Contents:</dt>
                     <dd class="col-9" id="detailFolderContents"></dd>
                 </dl>
@@ -353,7 +352,7 @@
                     {% csrf_token %}
                     <input type="hidden" name="slide_id" id="moveSlideId" value="">
                     <p>Moving slide <span id="moveSlideNameDisplay" style="font-weight: bold;"></span> to: </p>
-                    <div id="folderTreeContainer_slide" class="border p-3" style="max-height: 300px; overflow-y: auto;"></div>
+                    <div id="folderTreeContainer_slide" class="border p-3 folder-tree-container" style="max-height: 300px; overflow-y: auto;"></div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -405,8 +404,8 @@
                     <dd class="col-9" id="detailSlideCreated"></dd>
                     <dt class="col-3">Updated:</dt>
                     <dd class="col-9" id="detailSlideUpdated"></dd>
-                    <dt class="col-3">Uploader:</dt>
-                    <dd class="col-9" id="detailSlideUploader"></dd>
+                    <dt class="col-3">Author:</dt>
+                    <dd class="col-9" id="detailSlideAuthor"></dd>
                     <dt class="col-3">Folder:</dt>
                     <dd class="col-9" id="detailSlideFolder"></dd>
                     <dt class="col-3">Metadata:</dt>
@@ -426,226 +425,14 @@
         </div>
     </div>
 </div>
-{% endblock %}
+{% endblock content %}
 
 {% block extra_js %}
-<script type="text/javascript">
-    const tooltipTriggerList = document.querySelectorAll('[data-bs-tooltip="tooltip"]');
-    const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl, { trigger: 'hover', delay: { "show": 500 } }));
-
-    document.querySelectorAll('.modal').forEach(modal => {
-        modal.setAttribute('data-bs-backdrop', 'static');
-        modal.setAttribute('data-bs-keyboard', 'false');
-        modal.addEventListener('submit', () => {
-            modal.querySelectorAll('button').forEach(button => {
-                button.disabled = true;
-            });
-        });
-    });
-
-    const newFolderModal = document.getElementById('newFolderModal');
-    const newFolderName = document.getElementById('newFolderName');
-    newFolderModal.addEventListener('shown.bs.modal', function () {
-        newFolderName.focus();
-    });
-    newFolderModal.addEventListener('hidden.bs.modal', function () {
-        newFolderName.value = null;
-    })
-
-    const renameFolderModal = document.getElementById('renameFolderModal');
-    const renameFolderName = document.getElementById('renameFolderName');
-    renameFolderModal.addEventListener('shown.bs.modal', function () {
-        renameFolderName.focus();
-    });
-    renameFolderModal.addEventListener('hidden.bs.modal', function () {
-        renameFolderName.value = null;
-    })
-
-    function setupFolder(folderId, folderName) {
-        document.getElementById('renameFolderId').value = folderId;
-        document.getElementById('deleteFolderId').value = folderId;
-
-        document.getElementById('renameFolderNameDisplay').textContent = folderName;
-        document.getElementById('deleteFolderNameDisplay').textContent = folderName;
-    }
-
-    function setupFolderMove(folderId, folderName) {
-        document.getElementById('moveFolderId').value = folderId;
-        document.getElementById('moveFolderNameDisplay').textContent = folderName;
-        
-        loadFolderTree("folder");
-    }
-
-    function setupFolderDetails(folderId) {
-        // Show loading spinner
-        document.getElementById('detailFolderLoading').classList.remove('d-none');
-        document.getElementById('folderDetails').classList.add('d-none');
-        
-        fetch("{% url 'slides:folder_details' %}", {
-            method: 'POST',
-            headers: {
-                'X-CSRFToken': '{{ csrf_token }}',
-                'Content-Type': 'application/json',
-                'Accept': 'application/json',
-            },
-            body: JSON.stringify({
-                folder_id: folderId
-            })
-        })
-        .then(response => response.json())
-        .then(data => {
-            // Hide loading spinner
-            document.getElementById('detailFolderLoading').classList.add('d-none');
-            document.getElementById('folderDetails').classList.remove('d-none');
-            
-            document.getElementById('detailFolderName').textContent = data.name;
-            document.getElementById('detailFolderCreated').textContent = data.created_at;
-            document.getElementById('detailFolderContents').textContent = 
-                `${data.subfolder_count} folders, ${data.slide_count} slides`;
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            document.querySelector('.folder-details').innerHTML = 
-                '<div class="alert alert-danger">Error loading folder details</div>';
-            document.querySelector('.folder-details').classList.remove('d-none');
-            document.getElementById('detailFolderLoading').classList.add('d-none');
-        });
-    }
-
-    const uploadSlideModal = document.getElementById('uploadSlideModal')
-    uploadSlideModal.addEventListener('submit', function() {        
-        const selectSlide = document.getElementById('selectSlide');
-        const uploadSlideLoading = document.getElementById('uploadSlideLoading');
-        
-        selectSlide.classList.add('d-none');
-        uploadSlideLoading.classList.remove('d-none');
-    });
-    uploadSlideModal.addEventListener('hidden.bs.modal', function () {
-        document.getElementById('uploadSlideName').value = null;
-        document.getElementById('uploadSlideDescription').value = null;
-        document.getElementById('slideFile').value = null;
-    });
-
-    function setupSlide(slideId, slideName) {
-        document.getElementById('deleteSlideId').value = slideId;
-        document.getElementById('deleteSlideNameDisplay').textContent = slideName;
-    }
-    
-    function setupSlideEdit(slideId, slideName, slideDescription) {
-        document.getElementById('editSlideId').value = slideId;
-        document.getElementById('editSlideName').value = slideName;
-        document.getElementById('editSlideDescription').value = slideDescription;
-    }
-
-    function setupSlideMove(slideId, slideName) {
-        document.getElementById('moveSlideId').value = slideId;
-        document.getElementById('moveSlideNameDisplay').textContent = slideName;
-        
-        loadFolderTree("slide");
-    }
-
-    function setupSlideDetails(slideId) {
-        // Show loading spinner
-        document.getElementById('detailSlideLoading').classList.remove('d-none');
-        document.getElementById('slideDetails').classList.add('d-none');
-        
-        fetch("{% url 'slides:slide_details' %}", {
-            method: 'POST',
-            headers: {
-                'X-CSRFToken': '{{ csrf_token }}',
-                'Content-Type': 'application/json',
-                'Accept': 'application/json',
-            },
-            body: JSON.stringify({
-                slide_id: slideId
-            })
-        })
-        .then(response => response.json())
-        .then(data => {
-            // Hide loading spinner
-            document.getElementById('detailSlideLoading').classList.add('d-none');
-            document.getElementById('slideDetails').classList.remove('d-none');
-            
-            // Populate slide details
-            document.getElementById('detailSlideName').textContent = data.name;
-            document.getElementById('detailSlideDescription').textContent = data.description || '-';
-            document.getElementById('detailSlideCreated').textContent = data.created_at;
-            document.getElementById('detailSlideUpdated').textContent = data.updated_at;
-            document.getElementById('detailSlideUploader').textContent = data.uploader;
-            document.getElementById('detailSlideFolder').textContent = data.folder;
-            document.getElementById('detailSlideFile').textContent = data.file;
-
-            const metadataElement = document.getElementById('detailSlideMetadata');
-            if (data.metadata) {
-                try {
-                    // If metadata is a string, parse it; if it's already an object, use it directly
-                    const metadataObj = typeof data.metadata === 'string' 
-                        ? JSON.parse(data.metadata) 
-                        : data.metadata;
-                    
-                    // Format the metadata with proper indentation
-                    const formattedMetadata = JSON.stringify(metadataObj, null, 2);
-                    
-                    // Create a pre element for formatted display
-                    metadataElement.innerHTML = `<pre class="mb-0">${formattedMetadata}</pre>`;
-                } catch (e) {
-                    // If parsing fails, display as is
-                    metadataElement.textContent = "couldn't load metadata";
-                }
-            } else {
-                metadataElement.textContent = '-';
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            document.querySelector('.slide-details').innerHTML = 
-                '<div class="alert alert-danger">Error loading slide details</div>';
-            document.querySelector('.slide-details').classList.remove('d-none');
-            document.getElementById('detailSlideLoading').classList.add('d-none');
-        });
-    }
-
-    function loadFolderTree(type) {
-        const container = document.getElementById('folderTreeContainer_' + type);
-        container.innerHTML = '<div class="spinner-border spinner-border-sm" role="status"></div> Loading...';
-
-        // Fetch folder structure from server
-        fetch("{% url 'slides:get_folder_tree' %}")
-        .then(response => response.json())
-        .then(data => {
-            container.innerHTML = '<ul class="list-unstyled mb-0">' + buildFolderTree(data, type) + '</ul>';
-        }) 
-        .catch(error => {
-            console.error('Error:', error);
-            container.innerHTML = `<div class="text-danger">${error}</div>`;
-        });
-    }
-
-    function buildFolderTree(folders, type) {
-        let html = '';
-        folders.forEach(folder => {
-            folderAvailable = folder.id != document.getElementById('moveFolderId').value
-            collapseAvailable = folder.subfolders.length && (type == "folder" ? folderAvailable : true)
-            html += `
-                <li class="mb-2">
-                    <div class="form-check">
-                        <input class="form-check-input folder-select" 
-                            type="radio" 
-                            name="destination_folder_id" 
-                            id="folder_${folder.id}" 
-                            value="${folder.id}" 
-                            ${folderAvailable ? '' : 'disabled'}>
-                        <label class="form-check-label" for="folder_${folder.id}">
-                            <i class="bi bi-folder text-warning me-2"></i> ${folder.name}
-                        </label>
-                        <i class="bi bi-chevron-down" data-bs-toggle="collapse" href="#collapse_${folder.id}" role="button" ${collapseAvailable ? '' : 'hidden'}></i>
-                    </div>
-                    <ul class="list-unstyled mb-0 collapse" id="collapse_${folder.id}">
-                        ${collapseAvailable ? buildFolderTree(folder.subfolders) : ''}
-                    </ul>
-                </li>`;
-        });
-        return html;
-    }
+<script>
+    const FOLDER_DETAILS_URL = "{% url 'slides:folder_details' %}";
+    const SLIDE_DETAILS_URL = "{% url 'slides:slide_details' %}";
+    const FOLDER_TREE_URL = "{% url 'slides:get_folder_tree' %}";
+    const CSRF_TOKEN = "{{ csrf_token }}";
 </script>
-{% endblock %}
+<script src="{% static 'slides/slide_navigation.js' %}" type="text/javascript"></script>
+{% endblock extra_js %}

@@ -66,6 +66,21 @@ class User(AbstractBaseUser, PermissionsMixin):
         null=True,
         help_text="Department this user belongs to. Required for publishers.",
     )
+    GRADE_CHOICES = (
+        ("1", "premed1"),
+        ("2", "premed2"),
+        ("3", "med1"),
+        ("4", "med2"),
+        ("5", "med3"),
+        ("6", "med4"),
+    )
+    grade = models.CharField(
+        "grade",
+        choices=GRADE_CHOICES,
+        max_length=10,
+        blank=True,
+        help_text="Grade of the user. Required for students.",
+    )
 
     is_staff = models.BooleanField(
         "staff status",
@@ -103,6 +118,9 @@ class User(AbstractBaseUser, PermissionsMixin):
     def is_publisher(self):
         return self.groups.filter(name="publisher").exists()
 
+    def is_student(self):
+        return self.groups.filter(name="student").exists()
+
 
 class Department(models.Model):
     id = models.AutoField(primary_key=True)
@@ -125,5 +143,5 @@ class Department(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.base_folder:
-            self.base_folder = Folder.objects.create(name=self.name.lower(), parent=None)
+            self.base_folder = Folder.objects.create(name=self.name.title(), parent=None)
         super().save(*args, **kwargs)

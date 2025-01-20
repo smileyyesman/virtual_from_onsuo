@@ -13,8 +13,8 @@ urlpatterns = [
     path("details/", views.slide_details, name="slide_details"),
     path("folders/create/", views.create_folder, name="create_folder"),
     path("folders/rename/", views.rename_folder, name="rename_folder"),
-    path("folders/tree/", views.get_folder_tree, name="get_folder_tree"),
     path("folders/move/", views.move_folder, name="move_folder"),
     path("folders/delete/", views.delete_folder, name="delete_folder"),
     path("folders/details/", views.folder_details, name="folder_details"),
+    path("tree/", views.get_folder_tree, name="get_folder_tree"),
 ]

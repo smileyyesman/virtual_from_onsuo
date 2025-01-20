@@ -10,10 +10,17 @@ class Lecture(models.Model):
         related_name="lectures",
         blank=True,
     )
-    creator = models.ForeignKey(
+    author = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         db_column="created_by",
+        related_name="lectures",
+        blank=True,
+        null=True,
+    )
+    department = models.ForeignKey(
+        "accounts.Department",
+        on_delete=models.SET_NULL,
         related_name="lectures",
         blank=True,
         null=True,

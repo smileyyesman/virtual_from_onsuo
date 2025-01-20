@@ -2,7 +2,6 @@ import os
 import shutil
 
 from django.conf import settings
-from django.contrib import messages
 from django.db import models
 from openslide import OpenSlide
 from openslide.deepzoom import DeepZoomGenerator
@@ -23,7 +22,16 @@ class Folder(models.Model):
         blank=True,
         null=True,
     )
+    author = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        db_column="created_by",
+        related_name="folders",
+        blank=True,
+        null=True,
+    )
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     objects = FolderManager()
 
@@ -38,6 +46,10 @@ class Folder(models.Model):
         if self.parent:
             return f"{self.parent.get_full_path()}/{self.name}"
         return self.name
+
+    def is_base_folder(self):
+        """Check if this folder is a base folder"""
+        return self.parent is None
 
     def get_base_folder(self):
         """Get the root folder of this folder's hierarchy"""
@@ -54,27 +66,21 @@ class Folder(models.Model):
         """Check if the user has access to this folder"""
         if user.is_admin():
             return True
-
-        if user.department:
+        elif user.is_publisher() and user.department:
             return self.get_department() == user.department
-
         return False
 
     def is_empty(self):
         """Check if the folder and the subfolders don't have slides"""
-
         if self.slides.exists():
             return False
-
         for subfolder in self.subfolders.all():
             if not subfolder.is_empty():
                 return False
-
         return True
 
     def is_children(self, folder):
         """Check if the folder is a subfolder of this folder"""
-
         current_folder = folder.parent
         while current_folder:
             if current_folder == self:
@@ -110,10 +116,10 @@ class Slide(models.Model):
         help_text="Relative path to the image directory.",
     )
     metadata = models.JSONField(blank=True, null=True)
-    uploader = models.ForeignKey(
+    author = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
-        db_column="uploaded_by",
+        db_column="created_by",
         related_name="slides",
         blank=True,
         null=True,
@@ -140,23 +146,18 @@ class Slide(models.Model):
 
     def save(self, *args, **kwargs):
         try:
-            need_process = False
+            need_slide_processing = True
             if self.pk:
-                # Handle file changes for existing instances
                 old_instance = Slide.objects.get(pk=self.pk)
                 if old_instance.file != self.file:
-                    need_process = True
                     # delete old slide file
                     old_instance.file.delete()
                     # delete old image directory
-                    old_image_directory = old_instance.get_image_directory()
-                    if os.path.exists(old_image_directory):
-                        shutil.rmtree(old_image_directory)
-            else:
-                need_process = True
+                    self._delete_directory(old_instance.get_image_directory())
+                else:
+                    need_slide_processing = False
 
             if not self.name:
-                # Create name from file name for those without name
                 self.name = os.path.splitext(os.path.basename(self.file.name))[0]
 
             super().save(*args, **kwargs)
@@ -166,7 +167,7 @@ class Slide(models.Model):
                 Slide.objects.filter(pk=self.pk).update(image_root=image_root)
                 self.image_root = image_root
 
-            if need_process:
+            if need_slide_processing:
                 self.process_slide()
 
         except Exception as e:
@@ -175,9 +176,7 @@ class Slide(models.Model):
     def delete(self, *args, **kwargs):
         try:
             self.file.delete(False)
-            image_directory = self.get_image_directory()
-            if os.path.exists(image_directory):
-                shutil.rmtree(image_directory)
+            self._delete_directory(self.get_image_directory())
             super().delete(*args, **kwargs)
         except Exception as e:
             raise Exception(f"Failed to delete slide: {str(e)}")
@@ -189,12 +188,6 @@ class Slide(models.Model):
                 self._save_metadata(slide)
         except Exception as e:
             raise Exception(f"Failed to process slide: {str(e)}")
-
-    def delete_images(self, image_directory):
-        try:
-            shutil.rmtree(image_directory)
-        except Exception as e:
-            raise Exception(f"Failed to delete image directory: {str(e)}")
 
     def check_integrity(self):
         """Check integrity of the slide's files and metadata"""
@@ -258,8 +251,7 @@ class Slide(models.Model):
                     and status["thumbnail_exists"]
                     and status["associated_image_exists"]
                 ):
-                    if os.path.exists(image_directory):
-                        shutil.rmtree(image_directory)
+                    self._delete_directory(image_directory)
                     self._generate_images(slide, image_directory)
 
                 if not status["metadata_valid"]:
@@ -370,6 +362,14 @@ class Slide(models.Model):
 
         required_fields = {"mpp-x", "mpp-y", "sourceLens", "created"}
         return required_fields.issubset(self.metadata.keys())
+
+    @staticmethod
+    def _delete_directory(image_directory):
+        try:
+            if os.path.exists(image_directory):
+                shutil.rmtree(image_directory)
+        except Exception as e:
+            raise Exception(f"Failed to delete image directory: {str(e)}")
 
 
 class Tag(models.Model):

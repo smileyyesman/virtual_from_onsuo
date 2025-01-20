@@ -5,7 +5,7 @@
 
 {% block extra_head %}
 <script src="{% static 'slide_viewer/openseadragon/openseadragon.min.js' %}"></script>
-{% endblock %}
+{% endblock extra_head %}
 
 {% block extra_css %}
 <style>
@@ -28,7 +28,7 @@
         margin-right: 5px;
     }
 </style>
-{% endblock %}
+{% endblock extra_css %}
 
 {% block content %}
 <div class="row mb-4">
@@ -66,7 +66,7 @@
         </div>
     </div>
 </div>
-{% endblock %}
+{% endblock content %}
 
 {% block extra_js %}
 <script type="text/javascript">
@@ -141,4 +141,4 @@
         touchStartY = e.changedTouches[0].screenY;
     });
 </script>
-{% endblock %}
+{% endblock extra_js %}

@@ -13,9 +13,7 @@ class HomeView(TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         user = self.request.user
-        if user.groups.filter(name="admin").exists():
-            context["show_slide_list"] = True
-        elif user.groups.filter(name="publisher").exists():
+        if user.is_admin() or user.is_publisher():
             context["show_slide_list"] = True
         else:
             context["show_slide_list"] = False

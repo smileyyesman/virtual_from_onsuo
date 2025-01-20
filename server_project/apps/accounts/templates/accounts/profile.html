@@ -32,7 +32,7 @@
                         {{ user.last_name|default:"-" }}
                     </div>
                 </div>
-                <div class="row mb-4">
+                <div class="row mb-3">
                     <div class="col-sm-3">
                         <strong>Email:</strong>
                     </div>
@@ -40,6 +40,25 @@
                         {{ user.email|default:"-" }}
                     </div>
                 </div>
+                {% if user.is_publisher %}
+                <div class="row mb-3">
+                    <div class="col-sm-3">
+                        <strong>Department:</strong>
+                    </div>
+                    <div class="col-sm-9">
+                        {{ user.department|default:"-" }}
+                    </div>
+                </div>
+                {% elif user.is_student %}
+                <div class="row mb-3">
+                    <div class="col-sm-3">
+                        <strong>Grade:</strong>
+                    </div>
+                    <div class="col-sm-9">
+                        {{ user.get_grade_display|default:"-" }}
+                    </div>
+                </div>
+                {% endif %}
                 <div class="d-grid gap-2">
                     <a href="{% url 'accounts:password_change' %}" class="btn btn-primary">
                         Change Password
@@ -49,4 +68,4 @@
         </div>
     </div>
 </div>
-{% endblock %}
+{% endblock content %}

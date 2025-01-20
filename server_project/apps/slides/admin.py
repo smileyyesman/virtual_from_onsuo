@@ -9,7 +9,7 @@ from .models import (
 
 @admin.register(Folder)
 class FolderAdmin(admin.ModelAdmin):
-    list_display = ("name", "parent", "created_at")
+    list_display = ("name", "parent", "created_at", "updated_at")
     search_fields = ("name",)
     ordering = ("-created_at",)
 
