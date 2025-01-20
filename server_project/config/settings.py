@@ -166,3 +166,15 @@ AUTH_USER_MODEL = "accounts.User"
 LOGIN_URL = "/accounts/login/"
 LOGIN_REDIRECT_URL = "/"
 LOGOUT_REDIRECT_URL = "/"
+
+
+# Bootstrap Messages
+
+from django.contrib.messages import constants as messages
+
+messages.DEFAULT_TAGS.update(
+    {
+        messages.DEBUG: "primary",
+        messages.ERROR: "danger",
+    }
+)

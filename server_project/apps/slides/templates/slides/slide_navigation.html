@@ -1,0 +1,651 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+<style>
+    #folderTreeContainer ul {
+        padding-left: 1.5rem;
+    }
+
+    #folderTreeContainer li {
+        position: relative;
+    }
+
+    #folderTreeContainer .form-check {
+        margin-bottom: 0.25rem;
+    }
+
+    .collapsing {
+        transition: none;
+        display: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %} 
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        {% for crumb in breadcrumbs %}
+        <li class="breadcrumb-item">
+            <a href="{% url 'slides:slide_navigation' %}?folder={{ crumb.id }}">{{ crumb.name }}</a>
+        </li>
+        {% endfor %}
+    </ol>
+</nav>
+
+<!-- Folder Header -->
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="mb-0">
+        {% if current_folder %}
+        {{ current_folder.name }}
+        {% else %}
+        Root Directory
+        {% endif %}
+    </h4>
+    
+    <div class="btn-group">
+        {% if current_folder %}
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newFolderModal">
+            <i class="bi bi-folder-plus"></i> New Folder
+        </button>
+        {% endif %}
+        <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#uploadSlideModal">
+            <i class="bi bi-upload"></i> Upload Slide
+        </button>
+    </div>
+</div>
+
+<!-- Folder Contents -->
+{% if items %}
+<div class="table-responsive">
+    <table class="table table-hover">
+        <thead class="table-light">
+            <tr>
+                <th scope="col">Name</th>
+                <th scope="col">Type</th>
+                <th scope="col">Created</th>
+                <th scope="col" class="text-end">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in items %}
+            <tr>
+                <td>
+                    {% if item.type == 'folder' %}
+                    <i class="bi bi-folder text-warning me-2"></i>
+                    <a href="{% url 'slides:slide_navigation' %}?folder={{ item.id }}" class="text-decoration-none">{{ item.name }}</a>
+                    {% else %}
+                    <img src="{% url 'slide_viewer:get_thumbnail' slide_id=item.id %}" height=25 alt="{{ item.name }}">
+                    <a href="{% url 'slide_viewer:slide_view' slide_id=item.id %}" class="text-decoration-none">{{ item.name }}</a>
+                    {% endif %}
+                </td>
+                <td>{{ item.type|title }}</td>
+                <td>{{ item.created_at|date:"Y-m-d H:i" }}</td>
+                <td class="text-end">
+                    <div class="btn-group btn-group-sm">
+                        {% if item.type == 'folder' %}
+                        <button type="button" class="btn btn-outline-secondary" 
+                                data-bs-toggle="modal" data-bs-target="#detailFolderModal" 
+                                data-bs-tooltip="tooltip" title="Details" 
+                                onclick="setupFolderDetails({{ item.id }})">
+                            <i class="bi bi-info-circle"></i>
+                        </button>
+                        {% if current_folder %}
+                        <button type="button" class="btn btn-outline-primary" 
+                                data-bs-toggle="modal" data-bs-target="#renameFolderModal" 
+                                data-bs-tooltip="tooltip" title="Rename" 
+                                onclick="setupFolder({{ item.id }}, '{{ item.name }}')">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        <button type="button" class="btn btn-outline-primary" 
+                                data-bs-toggle="modal" data-bs-target="#moveFolderModal" 
+                                data-bs-tooltip="tooltip" title="Move" 
+                                onclick="setupFolderMove({{ item.id }}, '{{ item.name }}')">
+                            <i class="bi bi-folder"></i>
+                        </button>
+                        <button type="button" class="btn btn-outline-danger" 
+                                data-bs-toggle="modal" data-bs-target="#deleteFolderModal" 
+                                data-bs-tooltip="tooltip" title="Delete" 
+                                onclick="setupFolder({{ item.id }}, '{{ item.name }}')">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                        {% endif %}
+                        {% else %}
+                        <button type="button" class="btn btn-outline-secondary" 
+                                data-bs-toggle="modal" data-bs-target="#detailSlideModal" 
+                                data-bs-tooltip="tooltip" title="Details" 
+                                onclick="setupSlideDetails({{ item.id }})">
+                            <i class="bi bi-info-circle"></i>
+                        </button>
+                        <button type="button" class="btn btn-outline-primary" 
+                                data-bs-toggle="modal" data-bs-target="#editSlideModal" 
+                                data-bs-tooltip="tooltip" title="Edit" 
+                                onclick="setupSlideEdit({{ item.id }}, '{{ item.name }}', '{{ item.description }}')">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        <button type="button" class="btn btn-outline-primary" 
+                                data-bs-toggle="modal" data-bs-target="#moveSlideModal" 
+                                data-bs-tooltip="tooltip" title="Move" 
+                                onclick="setupSlideMove({{ item.id }}, '{{ item.name }}')">
+                            <i class="bi bi-folder"></i>
+                        </button>
+                        <button type="button" class="btn btn-outline-danger" 
+                                data-bs-toggle="modal" data-bs-target="#deleteSlideModal" 
+                                data-bs-tooltip="tooltip" title="Delete" 
+                                onclick="setupSlide({{ item.id }}, '{{ item.name }}')">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                        {% endif %}
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div class="alert alert-info" role="alert">
+    <i class="bi bi-info-circle me-2"></i>This folder is empty.
+</div>
+{% endif %}
+
+<!-- New Folder Modal -->
+<div class="modal fade" id="newFolderModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Create New Folder</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{% url 'slides:create_folder' %}">
+                <div class="modal-body">
+                    {% csrf_token %}
+                    <input type="hidden" name="parent_id" value="{{ current_folder.id }}">
+                    <label for="newFolderName" class="form-label">Folder Name</label>
+                    <input type="text" class="form-control" id="newFolderName" 
+                            name="name" required autocomplete="off">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Rename Folder Modal -->
+<div class="modal fade" id="renameFolderModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Rename Folder</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{% url 'slides:rename_folder' %}">
+                <div class="modal-body">
+                    {% csrf_token %}
+                    <input type="hidden" name="folder_id" id="renameFolderId" value="">
+                    <p>Change from <span id="renameFolderNameDisplay" style="font-weight: bold;"></span> to: </p>
+                    <label for="renameFolderName" class="form-label mt-2">Folder Name</label>
+                    <input type="text" class="form-control" id="renameFolderName" name="new_name" required>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Rename</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Move Folder Modal -->
+<div class="modal fade" id="moveFolderModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Move Folder</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{% url 'slides:move_folder' %}">
+                <div class="modal-body">
+                    {% csrf_token %}
+                    <input type="hidden" name="folder_id" id="moveFolderId" value="">
+                    <p>Moving folder <span id="moveFolderNameDisplay" style="font-weight: bold;"></span> to: </p>
+                    <div id="folderTreeContainer_folder" class="border p-3" style="max-height: 300px; overflow-y: auto;"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Move</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Folder Modal -->
+<div class="modal fade" id="deleteFolderModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Delete Folder</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{% url 'slides:delete_folder' %}">
+                <div class="modal-body">
+                    {% csrf_token %}
+                    <input type="hidden" name="folder_id" id="deleteFolderId" value="">
+                    <p>Are you sure to delete <span id="deleteFolderNameDisplay" style="font-weight: bold;"></span>?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Delete</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Detail Folder Modal -->
+<div class="modal fade" id="detailFolderModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Folder Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <dl class="row" id="folderDetails">
+                    <dt class="col-3">Name:</dt>
+                    <dd class="col-9" id="detailFolderName"></dd>
+                    <dt class="col-3">Created:</dt>
+                    <dd class="col-9" id="detailFolderCreated"></dd>
+                    <dt class="col-3">Contents:</dt>
+                    <dd class="col-9" id="detailFolderContents"></dd>
+                </dl>
+                <div id="detailFolderLoading" class="text-center mt-3 d-none">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Upload Slide Modal -->
+<div class="modal fade" id="uploadSlideModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Upload Slide</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{% url 'slides:upload_slide' %}" enctype="multipart/form-data">
+                <div class="modal-body">
+                    {% csrf_token %}
+                    <input type="hidden" name="folder_id" value="{{ current_folder.id }}">
+                    <div id="selectSlide">
+                        {% if current_folder %}
+                        <p>Upload to <span style="font-weight: bold;">{{ current_folder.name }}</span></p>
+                        {% endif %}
+                        <label for="uploadSlideName" class="form-label mt-2">Slide Name</label>
+                        <input type="text" class="form-control" id="uploadSlideName" name="slide_name" placeholder="Same with filename when left blank.">
+                        <label for="uploadSlideDescription" class="form-label mt-2">Slide Description</label>
+                        <input type="text" class="form-control" id="uploadSlideDescription" name="slide_description">
+                        <label for="slideFile" class="form-label mt-2">Select Slide</label>
+                        <input type="file" name="slideFile" class="form-control" id="slideFile" accept=".ndpi">
+                    </div>
+                    <div id="uploadSlideLoading" class="text-center mt-3 d-none">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Uploading Slide...</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Upload</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Slide Modal -->
+<div class="modal fade" id="editSlideModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Slide</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{% url 'slides:edit_slide' %}">
+                <div class="modal-body">
+                    {% csrf_token %}
+                    <input type="hidden" name="slide_id" id="editSlideId" value="">
+                    <label for="editSlideName" class="form-label mt-2">Slide Name</label>
+                    <input type="text" class="form-control" id="editSlideName" name="new_name" placeholder="Same with filename when left blank.">
+                    <label for="editSlideDescription" class="form-label mt-2">Slide Description</label>
+                    <input type="text" class="form-control" id="editSlideDescription" name="new_description">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Upload</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Move Slide Modal -->
+<div class="modal fade" id="moveSlideModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Move Slide</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{% url 'slides:move_slide' %}">
+                <div class="modal-body">
+                    {% csrf_token %}
+                    <input type="hidden" name="slide_id" id="moveSlideId" value="">
+                    <p>Moving slide <span id="moveSlideNameDisplay" style="font-weight: bold;"></span> to: </p>
+                    <div id="folderTreeContainer_slide" class="border p-3" style="max-height: 300px; overflow-y: auto;"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Move</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Slide Modal -->
+<div class="modal fade" id="deleteSlideModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Delete Slide</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{% url 'slides:delete_slide' %}">
+                <div class="modal-body">
+                    {% csrf_token %}
+                    <input type="hidden" name="slide_id" id="deleteSlideId" value="">
+                    <p>Are you sure to delete <span id="deleteSlideNameDisplay" style="font-weight: bold;"></span>?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Delete</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Detail Slide Modal -->
+<div class="modal fade" id="detailSlideModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Slide Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <dl class="row" id="slideDetails">
+                    <dt class="col-3">Name:</dt>
+                    <dd class="col-9" id="detailSlideName"></dd>
+                    <dt class="col-3">Description:</dt>
+                    <dd class="col-9" id="detailSlideDescription"></dd>
+                    <dt class="col-3">Created:</dt>
+                    <dd class="col-9" id="detailSlideCreated"></dd>
+                    <dt class="col-3">Updated:</dt>
+                    <dd class="col-9" id="detailSlideUpdated"></dd>
+                    <dt class="col-3">Uploader:</dt>
+                    <dd class="col-9" id="detailSlideUploader"></dd>
+                    <dt class="col-3">Folder:</dt>
+                    <dd class="col-9" id="detailSlideFolder"></dd>
+                    <dt class="col-3">Metadata:</dt>
+                    <dd class="col-9" id="detailSlideMetadata"></dd>
+                    <dt class="col-3">File:</dt>
+                    <dd class="col-9" id="detailSlideFile"></dd>
+                </dl>
+                <div id="detailSlideLoading" class="text-center mt-3 d-none">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script type="text/javascript">
+    const tooltipTriggerList = document.querySelectorAll('[data-bs-tooltip="tooltip"]');
+    const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl, { trigger: 'hover', delay: { "show": 500 } }));
+
+    document.querySelectorAll('.modal').forEach(modal => {
+        modal.setAttribute('data-bs-backdrop', 'static');
+        modal.setAttribute('data-bs-keyboard', 'false');
+        modal.addEventListener('submit', () => {
+            modal.querySelectorAll('button').forEach(button => {
+                button.disabled = true;
+            });
+        });
+    });
+
+    const newFolderModal = document.getElementById('newFolderModal');
+    const newFolderName = document.getElementById('newFolderName');
+    newFolderModal.addEventListener('shown.bs.modal', function () {
+        newFolderName.focus();
+    });
+    newFolderModal.addEventListener('hidden.bs.modal', function () {
+        newFolderName.value = null;
+    })
+
+    const renameFolderModal = document.getElementById('renameFolderModal');
+    const renameFolderName = document.getElementById('renameFolderName');
+    renameFolderModal.addEventListener('shown.bs.modal', function () {
+        renameFolderName.focus();
+    });
+    renameFolderModal.addEventListener('hidden.bs.modal', function () {
+        renameFolderName.value = null;
+    })
+
+    function setupFolder(folderId, folderName) {
+        document.getElementById('renameFolderId').value = folderId;
+        document.getElementById('deleteFolderId').value = folderId;
+
+        document.getElementById('renameFolderNameDisplay').textContent = folderName;
+        document.getElementById('deleteFolderNameDisplay').textContent = folderName;
+    }
+
+    function setupFolderMove(folderId, folderName) {
+        document.getElementById('moveFolderId').value = folderId;
+        document.getElementById('moveFolderNameDisplay').textContent = folderName;
+        
+        loadFolderTree("folder");
+    }
+
+    function setupFolderDetails(folderId) {
+        // Show loading spinner
+        document.getElementById('detailFolderLoading').classList.remove('d-none');
+        document.getElementById('folderDetails').classList.add('d-none');
+        
+        fetch("{% url 'slides:folder_details' %}", {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+            },
+            body: JSON.stringify({
+                folder_id: folderId
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Hide loading spinner
+            document.getElementById('detailFolderLoading').classList.add('d-none');
+            document.getElementById('folderDetails').classList.remove('d-none');
+            
+            document.getElementById('detailFolderName').textContent = data.name;
+            document.getElementById('detailFolderCreated').textContent = data.created_at;
+            document.getElementById('detailFolderContents').textContent = 
+                `${data.subfolder_count} folders, ${data.slide_count} slides`;
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            document.querySelector('.folder-details').innerHTML = 
+                '<div class="alert alert-danger">Error loading folder details</div>';
+            document.querySelector('.folder-details').classList.remove('d-none');
+            document.getElementById('detailFolderLoading').classList.add('d-none');
+        });
+    }
+
+    const uploadSlideModal = document.getElementById('uploadSlideModal')
+    uploadSlideModal.addEventListener('submit', function() {        
+        const selectSlide = document.getElementById('selectSlide');
+        const uploadSlideLoading = document.getElementById('uploadSlideLoading');
+        
+        selectSlide.classList.add('d-none');
+        uploadSlideLoading.classList.remove('d-none');
+    });
+    uploadSlideModal.addEventListener('hidden.bs.modal', function () {
+        document.getElementById('uploadSlideName').value = null;
+        document.getElementById('uploadSlideDescription').value = null;
+        document.getElementById('slideFile').value = null;
+    });
+
+    function setupSlide(slideId, slideName) {
+        document.getElementById('deleteSlideId').value = slideId;
+        document.getElementById('deleteSlideNameDisplay').textContent = slideName;
+    }
+    
+    function setupSlideEdit(slideId, slideName, slideDescription) {
+        document.getElementById('editSlideId').value = slideId;
+        document.getElementById('editSlideName').value = slideName;
+        document.getElementById('editSlideDescription').value = slideDescription;
+    }
+
+    function setupSlideMove(slideId, slideName) {
+        document.getElementById('moveSlideId').value = slideId;
+        document.getElementById('moveSlideNameDisplay').textContent = slideName;
+        
+        loadFolderTree("slide");
+    }
+
+    function setupSlideDetails(slideId) {
+        // Show loading spinner
+        document.getElementById('detailSlideLoading').classList.remove('d-none');
+        document.getElementById('slideDetails').classList.add('d-none');
+        
+        fetch("{% url 'slides:slide_details' %}", {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+            },
+            body: JSON.stringify({
+                slide_id: slideId
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Hide loading spinner
+            document.getElementById('detailSlideLoading').classList.add('d-none');
+            document.getElementById('slideDetails').classList.remove('d-none');
+            
+            // Populate slide details
+            document.getElementById('detailSlideName').textContent = data.name;
+            document.getElementById('detailSlideDescription').textContent = data.description || '-';
+            document.getElementById('detailSlideCreated').textContent = data.created_at;
+            document.getElementById('detailSlideUpdated').textContent = data.updated_at;
+            document.getElementById('detailSlideUploader').textContent = data.uploader;
+            document.getElementById('detailSlideFolder').textContent = data.folder;
+            document.getElementById('detailSlideFile').textContent = data.file;
+
+            const metadataElement = document.getElementById('detailSlideMetadata');
+            if (data.metadata) {
+                try {
+                    // If metadata is a string, parse it; if it's already an object, use it directly
+                    const metadataObj = typeof data.metadata === 'string' 
+                        ? JSON.parse(data.metadata) 
+                        : data.metadata;
+                    
+                    // Format the metadata with proper indentation
+                    const formattedMetadata = JSON.stringify(metadataObj, null, 2);
+                    
+                    // Create a pre element for formatted display
+                    metadataElement.innerHTML = `<pre class="mb-0">${formattedMetadata}</pre>`;
+                } catch (e) {
+                    // If parsing fails, display as is
+                    metadataElement.textContent = "couldn't load metadata";
+                }
+            } else {
+                metadataElement.textContent = '-';
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            document.querySelector('.slide-details').innerHTML = 
+                '<div class="alert alert-danger">Error loading slide details</div>';
+            document.querySelector('.slide-details').classList.remove('d-none');
+            document.getElementById('detailSlideLoading').classList.add('d-none');
+        });
+    }
+
+    function loadFolderTree(type) {
+        const container = document.getElementById('folderTreeContainer_' + type);
+        container.innerHTML = '<div class="spinner-border spinner-border-sm" role="status"></div> Loading...';
+
+        // Fetch folder structure from server
+        fetch("{% url 'slides:get_folder_tree' %}")
+        .then(response => response.json())
+        .then(data => {
+            container.innerHTML = '<ul class="list-unstyled mb-0">' + buildFolderTree(data, type) + '</ul>';
+        }) 
+        .catch(error => {
+            console.error('Error:', error);
+            container.innerHTML = `<div class="text-danger">${error}</div>`;
+        });
+    }
+
+    function buildFolderTree(folders, type) {
+        let html = '';
+        folders.forEach(folder => {
+            folderAvailable = folder.id != document.getElementById('moveFolderId').value
+            collapseAvailable = folder.subfolders.length && (type == "folder" ? folderAvailable : true)
+            html += `
+                <li class="mb-2">
+                    <div class="form-check">
+                        <input class="form-check-input folder-select" 
+                            type="radio" 
+                            name="destination_folder_id" 
+                            id="folder_${folder.id}" 
+                            value="${folder.id}" 
+                            ${folderAvailable ? '' : 'disabled'}>
+                        <label class="form-check-label" for="folder_${folder.id}">
+                            <i class="bi bi-folder text-warning me-2"></i> ${folder.name}
+                        </label>
+                        <i class="bi bi-chevron-down" data-bs-toggle="collapse" href="#collapse_${folder.id}" role="button" ${collapseAvailable ? '' : 'hidden'}></i>
+                    </div>
+                    <ul class="list-unstyled mb-0 collapse" id="collapse_${folder.id}">
+                        ${collapseAvailable ? buildFolderTree(folder.subfolders) : ''}
+                    </ul>
+                </li>`;
+        });
+        return html;
+    }
+</script>
+{% endblock %}

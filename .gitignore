@@ -6,4 +6,4 @@ __pycache__/
 media/
 db.sqlite3
 migrations/
-secret.json
+secrets.json

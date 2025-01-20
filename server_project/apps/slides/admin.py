@@ -16,11 +16,11 @@ class FolderAdmin(admin.ModelAdmin):
 
 @admin.register(Slide)
 class SlideAdmin(admin.ModelAdmin):
-    list_display = ("name", "slug", "file", "created_at", "updated_at")
-    search_fields = ("name", "slug", "description")
+    list_display = ("name", "file", "folder", "created_at", "updated_at")
+    search_fields = ("name", "description")
     ordering = ("-created_at",)
 
-    prepopulated_fields = {"name": ("file",), "slug": ("name",)}
+    prepopulated_fields = {"name": ("file",)}
 
 
 @admin.register(Tag)

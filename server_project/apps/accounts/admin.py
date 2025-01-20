@@ -59,4 +59,3 @@ admin.site.register(User, UserAdmin)
 class DepartmentAdmin(admin.ModelAdmin):
     list_display = ("name",)
     search_fields = ("name",)
-    prepopulated_fields = {"slug": ("name",)}

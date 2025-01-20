@@ -16,7 +16,7 @@
         <nav class="navbar navbar-expand-lg navbar-light bg-light">
             <div class="container">
                 <a class="navbar-brand" href="{% url 'home' %}">
-                    <img src="{% static 'img/logo.png' %}" height="30" class="d-inline-block align-top" alt="인제대학교 의과대학">
+                    <img src="{% static 'img/logo.png' %}" height="30" class="d-inline-block align-top" alt="인제대학교 의과대학"></img>
                     Virtual Microscope
                 </a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
@@ -37,12 +37,12 @@
                         {% endif %}
                         {% if user.is_authenticated %}
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url 'profile' %}">
+                            <a class="nav-link" href="{% url 'accounts:profile' %}">
                                 <i class="bi bi-person"></i> Profile
                             </a>
                         </li>
                         <li class="nav-item">
-                            <form method="POST" action="{% url 'logout' %}" class="d-inline">
+                            <form method="POST" action="{% url 'accounts:logout' %}" class="d-inline">
                                 {% csrf_token %}
                                 <button type="submit" class="btn btn-link nav-link">
                                     <i class="bi bi-box-arrow-right"></i> Logout
@@ -51,12 +51,12 @@
                         </li>
                         {% else %}
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url 'login' %}">
+                            <a class="nav-link" href="{% url 'accounts:login' %}">
                                 <i class="bi bi-box-arrow-in-right"></i> Login
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url 'register' %}">
+                            <a class="nav-link" href="{% url 'accounts:register' %}">
                                 <i class="bi bi-person-plus"></i> Register
                             </a>
                         </li>
@@ -66,8 +66,17 @@
             </div>
         </nav>        
     </header>
-
+    
     <main class="container py-4">
+        {% for message in messages %}
+        {% comment %}{% if not message.level_tag == 'success' %}{% endcomment %}
+        <div class="alert alert-{{ message.level_tag }} alert-dismissible" type="alert">
+            <div>{{ message.message }}</div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% comment %}{% endif %}{% endcomment %}
+        {% endfor %}
+
         {% block content %}{% endblock %}
     </main>
 
