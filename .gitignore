@@ -3,6 +3,7 @@
 __pycache__/
 
 # Django
+venv/
 media/
 db.sqlite3
 migrations/

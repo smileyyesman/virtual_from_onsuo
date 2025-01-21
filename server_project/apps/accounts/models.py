@@ -1,3 +1,4 @@
+from django.apps import apps
 from django.contrib.auth.models import (
     AbstractBaseUser,
     BaseUserManager,
@@ -6,7 +7,6 @@ from django.contrib.auth.models import (
 from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.db import models
 from django.utils import timezone
-from slides.models import Folder
 
 
 class UserManager(BaseUserManager):
@@ -143,5 +143,6 @@ class Department(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.base_folder:
+            Folder = apps.get_model("slides", "Folder")
             self.base_folder = Folder.objects.create(name=self.name.title(), parent=None)
         super().save(*args, **kwargs)

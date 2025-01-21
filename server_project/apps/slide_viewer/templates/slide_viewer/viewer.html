@@ -5,6 +5,8 @@
 
 {% block extra_head %}
 <script src="{% static 'slide_viewer/openseadragon/openseadragon.min.js' %}"></script>
+<!-- Openseadragon scalebar 플러그인 -->
+<script src="{% static 'slide_viewer/openseadragon/openseadragon-scalebar.js' %}"></script>
 {% endblock extra_head %}
 
 {% block extra_css %}
@@ -15,6 +17,7 @@
         border-radius: 8px;
         overflow: hidden;
     }
+
     .controls-overlay {
         position: absolute;
         top: 10px;
@@ -24,6 +27,7 @@
         padding: 10px;
         border-radius: 4px;
     }
+
     .btn-control {
         margin-right: 5px;
     }
@@ -52,15 +56,61 @@
     <div class="col">
         <div class="viewer-container">
             <div class="controls-overlay">
-                <button class="btn btn-sm btn-primary btn-control" onclick="toggleNav()" title="Toggle Navigator">
-                    <i class="bi bi-compass"></i> Navigator
-                </button>
-                <button class="btn btn-sm btn-secondary btn-control" onclick="viewer.viewport.goHome()" title="Reset View">
-                    <i class="bi bi-house"></i> Home
-                </button>
-                <button class="btn btn-sm btn-secondary btn-control" onclick="toggleFullScreen()" title="Full Screen">
-                    <i class="bi bi-fullscreen"></i> Full Screen
-                </button>
+                <!-- button 그룹 만들기 -->
+                <div class="btn-group" role="group" aria-label="Basic outlined example">
+                    <!-- 네비게이터 버튼-->
+                    <button class="btn btn-sm btn-outline-secondary" onclick="toggleNav()" title="Toggle Navigator">
+                        <i class="bi bi-compass"></i> Navigator
+                    </button>
+                    <!-- Home 버튼-->
+                    <button class="btn btn-sm btn-outline-secondary" onclick="viewer.viewport.goHome()"
+                        title="Reset View">
+                        <i class="bi bi-house"></i> Home
+                    </button>
+                    <!-- 전체화면 버튼 -->
+                    <button class="btn btn-sm btn-outline-secondary" onclick="toggleFullScreen()" title="Full Screen">
+                        <i class="bi bi-fullscreen"></i> Full Screen
+                    </button>
+                    <!-- 배율 드롭다운 버튼 -->
+                    <div class="btn-group" role="group">
+                        <button id="btnGroupDrop_scale" type="button"
+                            class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown"
+                            aria-expanded="false">
+                            Scale
+                        </button>
+                        <ul class="dropdown-menu" aria-labelledby="btnGroupDrop_scale">
+                            <li><button class="dropdown-item" onclick="setZoomLevel(1.25)">1.25X</button></li>
+                            <li><button class="dropdown-item" onclick="setZoomLevel(2.5)">2.5X</button></li>
+                            <li><button class="dropdown-item" onclick="setZoomLevel(5)">5X</button></li>
+                            <li><button class="dropdown-item" onclick="setZoomLevel(10)">10X</button></li>
+                            <li><button class="dropdown-item" onclick="setZoomLevel(20)">20X</button></li>
+                            <li><button class="dropdown-item" onclick="setZoomLevel(40)">40X</button></li>
+                            <li><button class="dropdown-item" onclick="setZoomLevel(63)">63X</button></li>
+                            <li><button class="dropdown-item" onclick="setZoomLevel(100)">100X</button></li>
+                        </ul>
+                    </div>
+
+
+
+                    <!-- 그리기 드롭다운 버튼-->
+                    <div class="btn-group" role="group">
+                        <button id="btnGroupDrop_annotation" type="button"
+                            class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown"
+                            aria-expanded="false">
+                            Drawing
+                        </button>
+                        <ul class="dropdown-menu" aria-labelledby="btnGroupDrop_annotation">
+                            <li><button class="dropdown-item">Pointer</button></li>
+                            <li><button class="dropdown-item">Circle</button></li>
+                            <li><button class="dropdown-item">Rectengle</button></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><button class="dropdown-item">Linear Measure</button></li>
+                            <li><button class="dropdown-item">Rectengle Measure</button></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><button class="dropdown-item">Choose Color</button></li>
+                        </ul>
+                    </div>
+                </div>
             </div>
             <div id="openseadragon-container" style="width: 100%; height: 80vh;"></div>
         </div>
@@ -86,6 +136,7 @@
         nextButton: 'next',
         previousButton: 'previous',
         showRotationControl: true,
+        maxZoomLevel: 52, //최대 줌 레벨 설정. 100X까지 되도록 설정함.
         gestureSettingsMouse: {
             clickToZoom: true,
             dblClickToZoom: true,
@@ -93,6 +144,28 @@
             scrollToZoom: true
         }
     });
+
+    // get slide_metadata
+    const slide_metadata = {
+        mpp_x: parseFloat("{{ mpp_x|floatformat:3 }}"),
+        sourceLens: parseInt("{{ source_lens}}"),
+    };
+
+    //Scalebar 추가
+    viewer.scalebar({
+        type: OpenSeadragon.ScalebarType.MICROSCOPY,
+        pixelsPerMeter: 1 / slide_metadata.mpp_x * 1000000,
+        minWidth: "150px",
+        location: OpenSeadragon.ScalebarLocation.Bottom_LEFT,
+        color: "white",
+        fontColor: "white",
+        //backgroundColor: "rgba(255, 255, 255, 0.5)",
+        fontSize: "large",
+        barThickness: 3,
+    });
+
+
+
 
     var navShown = true;
     function toggleNav() {
@@ -116,8 +189,8 @@
     }
 
     // Add keyboard controls
-    document.addEventListener('keydown', function(e) {
-        switch(e.key) {
+    document.addEventListener('keydown', function (e) {
+        switch (e.key) {
             case 'n':
             case 'N':
                 toggleNav();
@@ -136,9 +209,109 @@
     // Add touch gesture support
     let touchStartX = 0;
     let touchStartY = 0;
-    document.getElementById('openseadragon-container').addEventListener('touchstart', function(e) {
+    document.getElementById('openseadragon-container').addEventListener('touchstart', function (e) {
         touchStartX = e.changedTouches[0].screenX;
         touchStartY = e.changedTouches[0].screenY;
     });
+
+
+
+
+
+
+
+
+
+
+    // Scale
+
+    //sourceLens의 값과 baseImageZoom을 이용하여 배율 보정정
+    function calculateZoomFactor(targetMagnification) {
+        const sourceLens = slide_metadata.sourceLens;
+        const baseImageZoom = viewer.viewport.viewportToImageZoom(sourceLens);
+        const zoomFactor = targetMagnification / baseImageZoom;
+        return zoomFactor;
+    }
+
+    //zoom 설정정
+    function setZoomLevel(targetMagnification) {
+        const zoomFactor = calculateZoomFactor(targetMagnification);
+        viewer.viewport.zoomTo(zoomFactor, null, true);
+
+    }
+
+    //현재 zoom을 추적, 버튼 업데이트 함수수
+    function trackZoomAndUpdateButton() {
+        const scaleButton = document.getElementById('btnGroupDrop_scale'); // Scale 버튼 선택
+        if (!scaleButton) {
+            console.error('Scale button not found');
+            return;
+        }
+
+        //배율 변화 감지, 버튼에 반영
+        viewer.addHandler('update-viewport', function () {
+            let viewportZoom = viewer.viewport.getZoom();
+            let imageZoom = viewer.viewport.viewportToImageZoom(viewportZoom);
+            const sourceLens = slide_metadata.sourceLens;
+
+            let currentMagnification = imageZoom * sourceLens;
+
+            const predefinedMagnifications = [5, 10, 20, 40]; // 정수 배율 리스트
+            if (predefinedMagnifications.includes(Math.round(currentMagnification))) {
+                scaleButton.textContent = `${Math.round(currentMagnification)}X`;
+            } else {
+                scaleButton.textContent = `${currentMagnification.toFixed(2)}X`;
+            }
+        })
+    }
+
+    //페이지 로드될 때 배율 추적 시작
+    document.addEventListener('DOMContentLoaded', () => {
+        trackZoomAndUpdateButton(); // 배율 추적 시작
+    });
+
+    //숫자키 입력시 배율 변경
+    document.addEventListener('keydown', function (event) {
+        switch (event.key) {
+            case '1':
+                setZoomLevel(1.25);
+                break;
+            case '2':
+                setZoomLevel(2.5);
+                break;
+            case '3':
+                setZoomLevel(5);
+                break;
+            case '4':
+                setZoomLevel(10);
+                break;
+            case '5':
+                setZoomLevel(20);
+                break;
+            case '6':
+                setZoomLevel(40);
+                break;
+            case '7':
+                setZoomLevel(63);
+                break;
+            case '8':
+                setZoomLevel(100);
+                break;
+        }
+    });
+
+
+
+
+
+
+
+
+    viewer.addHandler('update-viewport', function () {
+        const zoom = viewer.viewport.getZoom();
+        console.log('Current Zoom:', zoom);
+    });
+
+
 </script>
 {% endblock extra_js %}

@@ -327,6 +327,7 @@ class Slide(models.Model):
 
         try:
             full_metadata = slide.properties
+
             metadata = {
                 "mpp-x": float(full_metadata.get("openslide.mpp-x")),
                 "mpp-y": float(full_metadata.get("openslide.mpp-y")),

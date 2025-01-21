@@ -20,8 +20,16 @@ class SlideView(TemplateView):
         slide_id = kwargs.get("slide_id")
         slide = get_object_or_404(Slide, id=slide_id)
 
+        mpp_x = slide.metadata.get("mpp-x")
+        source_lens = slide.metadata.get("sourceLens")
+
+
         context["slide"] = slide
         context["dzi_url"] = reverse_lazy("slide_viewer:get_dzi", kwargs={"slide_id": slide_id})
+        
+        context["mpp_x"] = mpp_x
+        context["source_lens"] = source_lens
+
         return context
 
 
