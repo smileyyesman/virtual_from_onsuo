@@ -1,0 +1,176 @@
+html,
+body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+
+    /* 그리드 레이아웃 */
+    display: grid;
+    grid-template-columns: 4fr 1fr;
+    grid-template-rows: 56px 38px auto 30px;
+    grid-template-areas:
+        'header header'
+        'nav aside'
+        'main article'
+        'main footer'
+}
+
+/* ========= 반응형 미디어 쿼리 ========= */
+/* 화면 너비가 992px 이상일 경우 -> 원래대로 */
+
+@media (min-width: 993px) {
+
+    html,
+    body {
+        min-width: 100vw;
+        /* 가로 폭이 1200px 이하로는 줄지 않음 */
+        min-height: 100vh;
+    }
+}
+
+
+/* 화면 너비가 397 이상 992px 이하일 경우(태블릿) -> 세로 스택 구조로 변경 */
+@media (max-width: 992px) {
+
+    html,
+    body {
+        min-width: 100vw;
+        min-height: 100vh;
+        grid-template-columns: 1fr;
+        grid-template-rows: 56px 40px 1fr 40px auto 30px;
+        grid-template-areas:
+            'header'
+            'nav'
+            'main'
+            'aside'
+            'article'
+            'footer';
+    }
+
+    /* nav와 article도 전체 너비 차지하도록 */
+    nav,
+    aside,
+    article {
+        width: 100%;
+    }
+
+    article {
+        max-height: 200px;
+        overflow-y: auto;
+    }
+}
+
+/* 화면 너비가 396 이하인 경우 (모바일)*/
+@media (max-width: 396px) {
+
+    html,
+    body {
+        min-width: 100vw;
+        min-height: 100vh;
+        grid-template-columns: 1fr;
+        grid-template-rows: 96px 40px 1fr 40px auto 30px;
+        grid-template-areas:
+            'header'
+            'nav'
+            'main'
+            'aside'
+            'article'
+            'footer';
+    }
+
+    /* nav와 article도 전체 너비 차지하도록 */
+    nav,
+    aside,
+    article {
+        width: 100%;
+    }
+
+    article {
+        max-height: 200px;
+        overflow-y: auto;
+    }
+}
+
+/* slide name style */
+.slide-text {
+    font-size: 25px;
+    color: black;
+    font-weight: bold;
+    padding: 0;
+}
+
+
+/* 상단 헤더 */
+header {
+    grid-area: header;
+}
+
+.collapse {
+    z-index: 1050;
+}
+
+nav {
+    grid-area: nav;
+}
+/* navbar style */
+.custom-nav {
+    padding: 0 !important;
+    background-color: #4A4F54;
+}
+/* nav button style */
+.custom-button {
+    border-radius: 0;
+    color: #FFFFFF;
+}
+
+main {
+    grid-area: main;
+    background: rgb(248, 249, 250);
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+/* main의 container-fluid에만 영향을 끼치게 함. viewer 양 옆 패딩 제거*/
+main.container-fluid {
+    padding-left: 0;
+    padding-right: 0;
+}
+
+aside {
+    grid-area: aside;
+    background: #788AA3;
+    color: #FFFFFF;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    font-size: 20px;
+}
+article {
+    grid-area: article;
+    background: #E0E0E0;
+    color: #222;
+    overflow-y: auto;
+    /* 스크롤바가 aside에 항상 뜨게. 맥에서는 안뜨니 상관없음 */
+}
+
+footer {
+    grid-area: footer;
+    overflow: hidden;
+    background: rgb(248, 249, 250);
+}
+
+#openseadragon-container {
+    height: 100%;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* viewer 클릭 시 검은 테두리 보이는 거 없애기   */
+#openseadragon-container:focus,
+#openseadragon-container *:focus {
+    outline: none !important;
+}

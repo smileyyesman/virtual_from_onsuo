@@ -373,6 +373,7 @@ class Slide(models.Model):
             raise Exception(f"Failed to delete image directory: {str(e)}")
 
 
+
 class Tag(models.Model):
     id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=100, unique=True)

@@ -1,6 +1,7 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -17,22 +18,34 @@
     </style>
     {% block extra_css %}{% endblock %}
 </head>
+
 <body class="bg-light">
     <header>
         <nav class="navbar navbar-expand-lg navbar-light bg-light">
             <div class="container-fluid">
+
+                <!-- 왼쪽 : 로고/이름 -->
                 <a class="navbar-brand" href="{% url 'home' %}">
-                    <img src="{% static 'img/logo.png' %}" height="30" class="d-inline-block align-top" alt="인제대학교 의과대학"></img>
+                    <img src="{% static 'img/logo.png' %}" height="30" class="d-inline-block align-top"
+                        alt="인제대학교 의과대학"></img>
                     Virtual Microscope
                 </a>
+
+                <!-- 모바일 토글 버튼 -->
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
                     aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
+
+                <!-- 접히는 영역 -->
                 <div class="collapse navbar-collapse" id="navbarNav">
-                    <ul class="navbar-nav me-auto">
-                        <!-- Your existing navigation items -->
-                    </ul>
+
+                    <!-- 가운데 정렬할 텍스트 (mx-auto) -->
+                    <span class="navbar-text mx-auto slide-text">
+                        {% block slide_name %}{% endblock slide_name %}
+                    </span>
+
+                    <!-- 오른쪽 영역 -->
                     <ul class="navbar-nav">
                         {% if user.is_admin %}
                         <li class="nav-item">
@@ -70,14 +83,29 @@
                     </ul>
                 </div>
             </div>
-        </nav>        
+        </nav>
     </header>
 
-    <main class="container-fluid py-4">
-        {% block content %}{% endblock %}
+    <!-- 추가함 -->
+    <nav>
+        {% block nav_content %}{% endblock nav_content %}
+    </nav>
+
+    <main class="container-fluid">
+        {% block main_content %}{% endblock main_content %}
     </main>
 
-    <footer class="text-center py-3">
+    <!-- 추가함 -->
+    <aside>
+        {% block aside_content %}{% endblock aside_content %}
+    </aside>
+    <!-- 추가함 -->
+    <article>
+        {% block article_content %}{% endblock article_content %}
+    </article>
+
+
+    <footer class="text-center">
         <small>&copy; 2024 SEMTLE, Inje University</small>
     </footer>
 
@@ -88,4 +116,5 @@
     </script>
     {% block extra_js %}{% endblock %}
 </body>
+
 </html>
