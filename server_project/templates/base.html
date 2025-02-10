@@ -22,14 +22,18 @@
 <body class="bg-light">
     <header>
         <nav class="navbar navbar-expand-lg navbar-light bg-light">
-            <div class="container-fluid">
-
-                <!-- 왼쪽 : 로고/이름 -->
+            <div class="container-fluid position-relative">
+                <!-- 왼쪽: 로고/이름 -->
                 <a class="navbar-brand" href="{% url 'home' %}">
                     <img src="{% static 'img/logo.png' %}" height="30" class="d-inline-block align-top"
-                        alt="인제대학교 의과대학"></img>
+                        alt="인제대학교 의과대학">
                     Virtual Microscope
                 </a>
+
+                <!-- 중앙: 항상 보이는 slide_name 영역 -->
+                <span class="navbar-text position-absolute top-50 start-50 translate-middle slide-text">
+                    {% block slide_name %}{% endblock slide_name %}
+                </span>
 
                 <!-- 모바일 토글 버튼 -->
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
@@ -37,15 +41,8 @@
                     <span class="navbar-toggler-icon"></span>
                 </button>
 
-                <!-- 접히는 영역 -->
-                <div class="collapse navbar-collapse" id="navbarNav">
-
-                    <!-- 가운데 정렬할 텍스트 (mx-auto) -->
-                    <span class="navbar-text mx-auto slide-text">
-                        {% block slide_name %}{% endblock slide_name %}
-                    </span>
-
-                    <!-- 오른쪽 영역 -->
+                <!-- 오른쪽: 접히는 영역 -->
+                <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
                     <ul class="navbar-nav">
                         {% if user.is_admin %}
                         <li class="nav-item">
@@ -85,6 +82,7 @@
             </div>
         </nav>
     </header>
+
 
     <!-- 추가함 -->
     <nav>

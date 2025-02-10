@@ -28,25 +28,9 @@
 
 <!-- main block -->
 {% block main_content %}
-
-<!-- <div class="row mb-4">
-    <div class="col">
-        <h1 class="h2">{{ slide.name }}</h1>
-    </div>
-</div>
-
-<div class="row mb-4">
-    <div class="col">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Description</h5>
-                <p class="card-text">{{ slide.description }}</p>
-            </div>
-        </div>
-    </div>
-</div> -->
 <div id="openseadragon-container"></div>
 {% endblock main_content %}
+
 
 <!-- nav block -->
 {% block nav_content %}
@@ -59,21 +43,104 @@
         </button>
         <!-- 토글 대상 -->
         <div class="collapse navbar-collapse" id="slideNav">
-            <ul class="navbar-nav">
-                <!-- Reset 버튼-->
+            <ul class="navbar-nav w-100">
+                <!-- File 드롭다운 버튼 -->
                 <li class="nav-item">
-                    <button class="btn btn btn-outline-light custom-button" onclick="viewer.viewport.goHome()" title="Reset View">
-                        <i class="bi bi-arrow-clockwise"></i>
-                    </button>
+                    <div class="btn-group" role="group">
+                        <button id="btnGroupDrop_file" type="button"
+                            class="btn btn btn-outline-light custom-button dropdown-toggle" data-bs-toggle="dropdown"
+                            aria-expanded="false" title="File"> File
+                        </button>
+                        <ul class="dropdown-menu" aria-labelledby="btnGroupDrop_file">
+                            <!-- 저장 버튼 -->
+                            <li><button class="dropdown-item" title="Save">
+                                    <i class="bi bi-floppy"></i> Save
+                                </button>
+                            </li>
+                            <!-- 업로드 버튼 -->
+                            <li><button class="dropdown-item" title="Upload"
+                                    onclick="document.getElementById('load-file').click()">
+                                    <i class="bi bi-file-earmark-arrow-up"></i> Upload
+                                </button>
+                                <input type="file" id="load-file" class="d-none" title="Upload" />
+                            </li>
+                            <li>
+                                <hr class="dropdown-divider" style="--bs-dropdown-divider-margin-y: 0">
+                            </li>
+                            <!-- 정보 버튼 -->
+                            <li><button class="dropdown-item" title="Slide-Information">
+                                    <i class="bi bi-info-circle"></i> Information
+                                </button>
+                            </li>
+                            <!-- 도움말 버튼 -->
+                            <li><button class="dropdown-item" title="Help">
+                                    <i class="bi bi-question-circle"></i> Help
+                                </button>
+                            </li>
+                        </ul>
+                    </div>
+                </li>
+                <!-- Edit 드롭다운 버튼 -->
+                <li class="nav-item">
+                    <div class="btn-group" role="group">
+                        <button id="btnGroupDrop_edit" type="button"
+                            class="btn btn btn-outline-light custom-button dropdown-toggle" data-bs-toggle="dropdown"
+                            aria-expanded="false" title="File"> Edit
+                        </button>
+                        <ul class="dropdown-menu" aria-labelledby="btnGroupDrop_edit">
+                            <!-- 뒤로가기(취소) 버튼 -->
+                            <li><button class="dropdown-item" onclick="anno.undo()" title="Undo">
+                                    <i class="bi bi-arrow-counterclockwise"></i> Undo
+                                </button>
+                            </li>
+                            <!-- 앞으로가기 버튼 -->
+                            <li><button class="dropdown-item" onclick="anno.redo()" title="Redo">
+                                    <i class="bi bi-arrow-clockwise"></i> Redo
+                                </button>
+                            </li>
+                            <!-- 지우개 버튼 -->
+                            <li><button class="dropdown-item" id="erase-btn" title="Remove Annotation">
+                                    <i class="bi bi-eraser"></i> Erase
+                                </button>
+                            </li>
+                        </ul>
+                    </div>
+                </li>
+                <!-- View 드롭다운 버튼 -->
+                <li class="nav-item">
+                    <div class="btn-group" role="group">
+                        <button id="btnGroupDrop_view" type="button"
+                            class="btn btn btn-outline-light custom-button dropdown-toggle" data-bs-toggle="dropdown"
+                            aria-expanded="false" title="File"> View
+                        </button>
+                        <ul class="dropdown-menu" aria-labelledby="btnGroupDrop_view">
+                            <!-- 네비게이터 버튼-->
+                            <li><button class="dropdown-item" onclick="toggleNav()" title="Toggle Navigator">
+                                    <i class="bi bi-geo-alt-fill"></i> Navigator
+                                </button>
+                            </li>
+                            <!-- 전체화면 버튼 -->
+                            <li><button class="dropdown-item" onclick="toggleFullScreen()" title="Full Screen">
+                                    <i class="bi bi-arrows-fullscreen"></i> Full Screen
+                                </button>
+                            </li>
+                        </ul>
+                    </div>
                 </li>
                 <!-- 배율 드롭다운 버튼 -->
                 <li class="nav-item">
                     <div class="btn-group" role="group">
                         <button id="btnGroupDrop_scale" type="button"
                             class="btn btn btn-outline-light custom-button dropdown-toggle" data-bs-toggle="dropdown"
-                            aria-expanded="false" style="width: 102px;" title="Scale">
+                            aria-expanded="false" style="width: 102px;" title="Change Lens">
                         </button>
                         <ul class="dropdown-menu" aria-labelledby="btnGroupDrop_scale">
+                            <!-- Reset 버튼 -->
+                            <li><button class="dropdown-item" onclick="viewer.viewport.goHome()">
+                                    Reset
+                                </button>
+                            </li>
+                            <!-- 배율 버튼 -->
                             <li><button class="dropdown-item" onclick="setZoomLevel(1.25)">1.25X</button></li>
                             <li><button class="dropdown-item" onclick="setZoomLevel(2.5)">2.5X</button></li>
                             <li><button class="dropdown-item" onclick="setZoomLevel(5)">5X</button></li>
@@ -91,52 +158,77 @@
                         <button id="btnGroupDrop_annotation" type="button"
                             class="btn btn btn-outline-light custom-button dropdown-toggle" data-bs-toggle="dropdown"
                             aria-expanded="false" title="Drawing">
-                            Drawing
+                            <span>Drawing </span><span id="ink">●</span>
                         </button>
                         <ul class="dropdown-menu" aria-labelledby="btnGroupDrop_annotation">
-                            <li><button class="dropdown-item">Pointer</button></li>
-                            <li><button class="dropdown-item">Circle</button></li>
-                            <li><button class="dropdown-item">Rectengle</button></li>
+                            <!-- Annotation 버튼-->
+                            <li><button class="dropdown-item"><i class="bi bi-arrow-up-left"></i> Pointer</button></li>
+                            <li><button class="dropdown-item"><i class="bi bi-circle"></i> Circle</button></li>
+                            <li><button class="dropdown-item"><i class="bi bi-square"></i> Rectengle</button></li>
                             <li>
-                                <hr class="dropdown-divider">
+                                <hr class="dropdown-divider" style="--bs-dropdown-divider-margin-y: 0">
                             </li>
-                            <li><button class="dropdown-item">Linear Measure</button></li>
-                            <li><button class="dropdown-item">Rectengle Measure</button></li>
+                            <!-- Measure 버튼-->
+                            <li><button class="dropdown-item"><i class="bi bi-rulers"></i> Linear Measure</button></li>
                             <li>
-                                <hr class="dropdown-divider">
+                                <hr class="dropdown-divider" style="--bs-dropdown-divider-margin-y: 0">
                             </li>
-                            <li><button class="dropdown-item">Choose Color</button></li>
+                            <li class="dropdown-item">
+                                <i class="bi bi-palette"></i><span> Choose Color </span>
+                            </li>
+                            <!-- 항상 보이는 색상 팔레트 -->
+                            <div class="color-palette">
+                                <div class="color-option" data-color="#ff0000">
+                                    <div class="color-circle red"></div>
+                                </div>
+                                <div class="color-option" data-color="#0000ff">
+                                    <div class="color-circle blue"></div>
+                                </div>
+                                <div class="color-option" data-color="#000001">
+                                    <div class="color-circle black"></div>
+                                </div>
+                                <div class="color-option" data-color="#ffffff">
+                                    <div class="color-circle white"></div>
+                                </div>
+                                <div class="color-option" data-color="#ffff00">
+                                    <div class="color-circle yellow"></div>
+                                </div>
+                                <div class="color-option" data-color="#ff00ff">
+                                    <div class="color-circle magenta"></div>
+                                </div>
+                                <div class="color-option" data-color="#00ff00">
+                                    <div class="color-circle green"></div>
+                                </div>
+                                <div class="color-option" data-color="#8b4513">
+                                    <div class="color-circle brown"></div>
+                                </div>
+                            </div>
                         </ul>
                     </div>
                 </li>
-                <!-- 네비게이터 버튼-->
-                <li class="nav-item">
-                    <button class="btn btn btn-outline-light custom-button" onclick="toggleNav()" title="Toggle Navigator">
-                        <i class="bi bi-compass"></i>
+                <!-- 뒤로가기(취소) 버튼 -->
+                <li class="nav-item"><button class="btn btn btn-outline-light custom-button" onclick="anno.undo()"
+                        title="Undo">
+                        <i class="bi bi-arrow-counterclockwise"></i>
                     </button>
                 </li>
-                <!-- 전체화면 버튼 -->
-                <li class="nav-item">
-                    <button class="btn btn btn-outline-light custom-button" onclick="toggleFullScreen()" title="Full Screen">
-                        <i class="bi bi-arrows-fullscreen"></i>
+                <!-- 앞으로가기 버튼 -->
+                <li class="nav-item"><button class="btn btn btn-outline-light custom-button" onclick="anno.redo()"
+                        title="Redo">
+                        <i class="bi bi-arrow-clockwise"></i>
                     </button>
                 </li>
-                <!-- 정보 버튼 -->
-                <li class="nav-item">
-                    <button class="btn btn btn-outline-light custom-button" title="Slide-Information">
-                        <i class="bi bi-info-circle"></i>
-                    </button>
-                </li>
-                <!-- 도움말 버튼 -->
-                <li class="nav-item">
-                    <button class="btn btn btn-outline-light custom-button" title="Help">
-                        <i class="bi bi-question-circle"></i>
+
+                <!-- Reset 버튼(이 이후로 오른쪽으로 밀림림) -->
+                <li class="nav-item ms-auto"><button class="btn btn btn-outline-light custom-button"
+                        onclick="viewer.viewport.goHome()" title="Reset View">
+                        <i class="bi bi-house"></i>
                     </button>
                 </li>
                 <!-- 저장 버튼 -->
                 <li class="nav-item">
                     <button class="btn btn btn-outline-light custom-button" title="Save">
-                        <i class="bi bi-file-earmark-arrow-down"></i>
+                        <i class="bi bi-floppy"></i>
                     </button>
                 </li>
             </ul>
@@ -150,9 +242,11 @@
 {% block aside_content %}
 Description
 {% endblock aside_content %}
+
 <!-- article block -->
 {% block article_content %}
 <h1>이곳은 설명이 적히는 자리</h1>
+<h2>{{ slide.description }}</h2>
 {% endblock article_content %}
 
 
@@ -258,7 +352,6 @@ Description
 
 
 
-
     // Scale
 
     //sourceLens의 값과 baseImageZoom을 이용하여 배율 보정정
@@ -301,9 +394,19 @@ Description
         })
     }
 
-    //페이지 로드될 때 배율 추적 시작
+    //페이지 로드될 때 -배율 추적 시작, 색상 팔레트 초기화
     document.addEventListener('DOMContentLoaded', () => {
-        trackZoomAndUpdateButton(); // 배율 추적 시작
+        // 색상 팔레트 관련 초기화
+        const colorPalette = document.querySelector('.color-palette');
+        const dropdownMenu = document.querySelector('#btnGroupDrop_annotation').nextElementSibling;
+
+        // 색상 팔레트 안에서 클릭 시 드롭다운이 닫히지 않도록 방지
+        colorPalette.addEventListener('click', function (event) {
+            event.stopPropagation(); // 클릭 이벤트가 부모 요소까지 전달되지 않도록 막음
+        });
+
+        // 배율 추적 시작
+        trackZoomAndUpdateButton();
     });
 
 
@@ -367,5 +470,19 @@ Description
     //     console.log("Viewport Zoom:", viewportZoom);
     //     console.log("Image Zoom:", imageZoom);
     // });
+
+    let anno;
+    let selectedColor = '#ff0000'
+    let count=0;
+
+    // 색상 선택
+    document.querySelectorAll('.color-option').forEach(item => {
+        item.addEventListener('click', function() {
+            selectedColor = this.dataset.color;
+            document.getElementById("ink").style.color = selectedColor;
+        });
+    });
+
+
 </script>
 {% endblock extra_js %}
